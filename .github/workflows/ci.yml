@@ -132,6 +132,9 @@ jobs:
           # Server lane tests the CLI package (package name @synara/cli).
           - pkg: server
             filter: "@synara/cli"
+          # Cloud-control lane covers the independently deployable control plane.
+          - pkg: cloud-control
+            filter: "@synara/cloud-control"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
