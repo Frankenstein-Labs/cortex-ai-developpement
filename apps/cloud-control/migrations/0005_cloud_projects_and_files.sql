@@ -12,18 +12,19 @@ CREATE TABLE projects (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   deleted_at TIMESTAMPTZ,
-  UNIQUE (organization_id, slug),
   UNIQUE (id, organization_id),
   CHECK (length(trim(name)) > 0),
   CHECK (length(trim(slug::text)) > 0)
 );
+CREATE UNIQUE INDEX projects_active_organization_slug_key
+  ON projects (organization_id, slug) WHERE deleted_at IS NULL;
 CREATE INDEX projects_active_org_idx ON projects (organization_id, updated_at DESC) WHERE deleted_at IS NULL;
 
 ALTER TABLE workspaces ADD COLUMN project_id UUID;
 ALTER TABLE workspaces
   ADD CONSTRAINT workspaces_project_organization_fk
   FOREIGN KEY (project_id, organization_id)
-  REFERENCES projects (id, organization_id) ON DELETE SET NULL;
+  REFERENCES projects (id, organization_id) ON DELETE SET NULL (project_id);
 CREATE INDEX workspaces_project_idx ON workspaces (project_id, last_active_at DESC) WHERE project_id IS NOT NULL;
 
 CREATE TABLE cloud_files (
@@ -37,10 +38,11 @@ CREATE TABLE cloud_files (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   deleted_at TIMESTAMPTZ,
-  UNIQUE (workspace_id, path),
   CHECK (path LIKE '/%'),
   CHECK (length(path) <= 4096)
 );
+CREATE UNIQUE INDEX cloud_files_active_workspace_path_key
+  ON cloud_files (workspace_id, path) WHERE deleted_at IS NULL;
 ALTER TABLE cloud_files
   ADD CONSTRAINT cloud_files_workspace_organization_fk
   FOREIGN KEY (workspace_id, organization_id)
