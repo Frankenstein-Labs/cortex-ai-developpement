@@ -13,8 +13,8 @@ bun run lint
 bun run typecheck
 bun run test
 bun run brand:check
-bun run windows-runtime:check"
-bun run migrations:check"
+bun run windows-runtime:check
+bun run migrations:check
 ```
 
 Rules
