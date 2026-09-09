@@ -5,7 +5,8 @@ export function normalizeCloudFilePath(path: string): string {
   if (!path.startsWith("/")) throw new Error("Cloud file paths must be absolute.");
   if (path.includes("\\")) throw new Error("Cloud file paths must use forward slashes.");
   const parts = path.split("/");
-  if (parts.some((part) => part === "..")) throw new Error("Cloud file paths cannot escape the workspace.");
+  if (parts.some((part) => part === ".."))
+    throw new Error("Cloud file paths cannot escape the workspace.");
   const normalized = parts.filter(Boolean).join("/");
   if (normalized.length === 0) throw new Error("Cloud file path cannot be the workspace root.");
   return `/${normalized}`;
@@ -18,7 +19,9 @@ export function hashCloudFileContent(content: string): string {
 
 /** Advances a file version only when the optional optimistic lock matches. */
 export function nextCloudFileVersion(currentVersion: number, expectedVersion?: number): number {
-  if (!Number.isSafeInteger(currentVersion) || currentVersion < 1) throw new Error("Invalid current file version.");
-  if (expectedVersion !== undefined && expectedVersion !== currentVersion) throw new Error("Cloud file version conflict.");
+  if (!Number.isSafeInteger(currentVersion) || currentVersion < 1)
+    throw new Error("Invalid current file version.");
+  if (expectedVersion !== undefined && expectedVersion !== currentVersion)
+    throw new Error("Cloud file version conflict.");
   return currentVersion + 1;
 }
