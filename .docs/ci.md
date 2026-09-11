@@ -2,6 +2,28 @@
 
 `.github/workflows/ci.yml` runs on pull requests and pushes to `main`. It has four independent jobs so a platform-specific or release-specific regression is visible separately from the main Linux quality pipeline.
 
+## Local validation sequence
+
+Run these from a clean checkout (Bun 1.4.2, `bun install --frozen-lockfile` first) for the same signal CI gets locally:
+
+```bash
+bun install --frozen-lockfile
+bun run fmt:check
+bun run lint
+bun run typecheck
+bun run test
+bun run brand:check
+bun run windows-runtime:check
+bun run migrations:check
+```
+
+Rules
+
+- **Never** run `bun test` directly — always `bun run test` (Vitest).
+- `lint` passes with zero errors but ~500 pre-existing warnings — warnings alone do not fail the gate.
+- `migrations:check` needs release tags reachable from the checkout — a shallow clone (or `fetch-depth: 1`) makes it skip with a warning. Use `actions/checkout` with `fetch-depth: 0` or `git fetch --unshallow --tags` to enable it.
+- `typecheck` triggers an `effect-tsgo patch` on TypeScript — expect it to re-patch during the first run in a fresh install.
+
 ## Main quality job
 
 `Format, Lint, Typecheck, Test, Browser Test, Build` runs on Ubuntu and blocks on:
