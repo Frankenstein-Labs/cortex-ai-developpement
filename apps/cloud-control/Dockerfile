@@ -5,6 +5,7 @@ WORKDIR /app
 COPY apps/cloud-control/package.json ./package.json
 COPY apps/cloud-control/tsconfig.json ./tsconfig.json
 COPY apps/cloud-control/src ./src
+COPY apps/cloud-control/migrations ./migrations
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
