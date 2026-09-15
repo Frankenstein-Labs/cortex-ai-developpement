@@ -2,12 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { Button } from "~/components/ui/button";
-import {
-  CloudRequestError,
-  cloudFetch,
-  type CloudProject,
-  type CloudWorkspace,
-} from "~/cloudApi";
+import { CloudRequestError, cloudFetch, type CloudProject, type CloudWorkspace } from "~/cloudApi";
 
 export const Route = createFileRoute("/cloud/projects/$projectId")({
   component: CloudProjectPage,
