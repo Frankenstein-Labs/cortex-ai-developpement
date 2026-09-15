@@ -237,6 +237,11 @@ function RootRouteView() {
   useSyncDesktopTopBarTrafficLightGutterZoom();
   useTheme();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isCloudRoute =
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/cloud" ||
+    pathname.startsWith("/cloud/");
   const [compatibilityIssue, setCompatibilityIssue] = useState<WsCompatibilityError | null>(() =>
     readLatestWsCompatibilityIssue(),
   );
@@ -271,7 +276,7 @@ function RootRouteView() {
     </>
   );
 
-  if (compatibilityIssue && pathname !== "/cloud") {
+  if (compatibilityIssue && !isCloudRoute) {
     return (
       <>
         <TransportCompatibilityView issue={compatibilityIssue} />
@@ -283,7 +288,7 @@ function RootRouteView() {
   // Cloud identity is a browser session owned by the cloud control plane, not a
   // desktop pairing session. These routes must stay reachable when the local
   // WebSocket server is absent, and must never mount local event hydration.
-  if (pathname === "/login" || pathname === "/signup" || pathname === "/cloud") {
+  if (isCloudRoute) {
     return <Outlet />;
   }
 

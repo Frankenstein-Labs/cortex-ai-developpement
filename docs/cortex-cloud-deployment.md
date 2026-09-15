@@ -2,7 +2,9 @@
 
 ## Current architecture
 
-The repository contains two independently deployable surfaces. `apps/marketing` is the existing Next.js marketing project currently linked to Vercel. `apps/cloud-control` is a standalone Bun HTTP service using `Bun.SQL` against PostgreSQL and Supabase Auth; it is not a Next.js API route and must not be mounted into the marketing project as a fake backend.
+The repository contains **three** independently deployable surfaces. `apps/marketing` is the public Next.js marketing site; `apps/web` is the authenticated Vite single-page application; `apps/cloud-control` is a standalone Bun HTTP API using `Bun.SQL` against PostgreSQL and Supabase Auth. Cloud Control is not a Next.js API route and must not be mounted into marketing as a fake backend.
+
+The public navigation deliberately crosses from marketing to the Web deployment: marketing sends **Sign in** to `${NEXT_PUBLIC_CORTEX_APP_URL}/login` and **Get started** to `${NEXT_PUBLIC_CORTEX_APP_URL}/signup`. The Web application calls Cloud Control using `VITE_CLOUD_CONTROL_URL` with credentialed fetches. Do not point either variable at a preview URL in production.
 
 ## Cloud Control deployment
 
@@ -25,13 +27,25 @@ After deployment, verify both endpoints. A successful `/healthz` proves process 
 
 ## Web deployment
 
+Create a **second Vercel project** with Root Directory `apps/web`. The checked-in `apps/web/vercel.json` builds `dist` and rewrites all SPA deep links (including `/login`, `/signup`, `/cloud/projects/:id`, and `/cloud/workspaces/:id`) to `index.html`. Configure the Vercel project as follows:
+
+| Setting | Value |
+| --- | --- |
+| Root Directory | `apps/web` |
+| Install Command | `bun install --frozen-lockfile` |
+| Build Command | `bun run build` |
+| Output Directory | `dist` |
+| Public variable | `VITE_CLOUD_CONTROL_URL=https://api.<your-domain>` |
+
+Set `NEXT_PUBLIC_CORTEX_APP_URL=https://app.<your-domain>` in the existing Vercel marketing project (Root Directory `apps/marketing`). `NEXT_PUBLIC_CORTEX_APP_URL` and `VITE_CLOUD_CONTROL_URL` are public browser configuration only. `CORTEX_DATABASE_URL` is server-only and must only be set on Cloud Control.
+
 The web application must set:
 
 ```text
 VITE_CLOUD_CONTROL_URL=https://<public-cloud-control-host>
 ```
 
-The browser calls the control plane with `credentials: "include"`. The control plane must return an exact `Access-Control-Allow-Origin` matching the web origin and `Access-Control-Allow-Credentials: true`. Do not use `*` and do not replace the cookie with local storage.
+The browser calls the control plane with `credentials: "include"`. The control plane must return an exact `Access-Control-Allow-Origin` matching the web origin and `Access-Control-Allow-Credentials: true`. Do not use `*` and do not replace the cookie with local storage. Prefer `app.<domain>` and `api.<domain>` under the same registrable domain with `CORTEX_COOKIE_SAMESITE=lax`; if they are cross-site, use `CORTEX_COOKIE_SAMESITE=none` and secure cookies. Set `CORTEX_ALLOWED_ORIGINS` to the exact Web origin, not the marketing URL.
 
 ## Supabase Auth
 
@@ -48,7 +62,7 @@ Run the following against the deployed services, not against mocks:
 3. Verify the opaque `cortex_cloud_session` cookie does not contain a Supabase JWT.
 4. Call session, organizations, and projects endpoints.
 5. Create a project and verify tenant ownership.
-6. Create a workspace and confirm status remains `provisioning` until a real runtime exists.
+6. Open `/cloud/projects/<project-id>` and verify its workspace list. Workspace creation requires a connected-repository integration; this UI does not pretend that a workspace or AI runtime exists before that integration has been deployed.
 7. Create, read, update, conflict-check, and soft-delete a cloud file.
 8. Verify traversal paths are rejected.
 9. Logout and verify session returns `401` and the `web_sessions` row is revoked.

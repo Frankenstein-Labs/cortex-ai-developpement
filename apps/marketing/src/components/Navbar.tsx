@@ -5,9 +5,11 @@ import { formatStars, getStars } from "@/lib/githubStars";
 import { GITHUB_REPO_URL } from "@/lib/seo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import MobileNav from "@/components/MobileNav";
+import { resolveCloudAppUrl } from "@/lib/cloudAppUrl";
 
 export default async function Navbar() {
   const stars = await getStars();
+  const cloudAppUrl = resolveCloudAppUrl();
   return (
     <nav aria-label="Primary navigation" className="relative w-full px-4 py-4 sm:px-6">
       <div className="mx-auto flex h-9 max-w-6xl items-center justify-between gap-2 sm:gap-6">
@@ -80,10 +82,16 @@ export default async function Navbar() {
             </a>
           ) : null}
           <Link
-            href="/install"
+            href={`${cloudAppUrl}/login`}
             className="rounded-full border border-[var(--divide)] px-3 py-1 text-[12.5px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--mock-row)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)] sm:px-3.5 sm:text-[13px]"
           >
-            Download
+            Sign in
+          </Link>
+          <Link
+            href={`${cloudAppUrl}/signup`}
+            className="rounded-full bg-[var(--text-primary)] px-3 py-1 text-[12.5px] font-medium text-[var(--background)] transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)] sm:px-3.5 sm:text-[13px]"
+          >
+            Get started
           </Link>
         </div>
         <MobileNav />
