@@ -39,6 +39,20 @@ Configuration is fail-fast:
 | `CORTEX_SESSION_COOKIE` | no | HttpOnly cookie name; defaults to `cortex_cloud_session`. |
 | `CORTEX_SESSION_TTL_SECONDS` | no | Cookie lifetime; defaults to seven days. |
 | `CORTEX_COOKIE_SECURE` | no | Defaults to secure cookies unless explicitly `false`. |
+| `CORTEX_ALLOWED_ORIGINS` | production | Comma-separated HTTPS browser origins allowed to send credentialed requests. Wildcards are not accepted. |
+
+## Browser and OAuth deployment requirements
+
+The control plane sends `Access-Control-Allow-Origin` only for an exact origin listed in
+`CORTEX_ALLOWED_ORIGINS`, together with `Access-Control-Allow-Credentials: true`. The web
+deployment must set `VITE_CLOUD_CONTROL_URL` to the public HTTPS control-plane URL; it must
+not use local storage as an authentication fallback.
+
+GitHub and Google OAuth are intentionally not simulated. Supabase Auth must have each provider
+enabled, with its provider credentials and callback configuration set in the Supabase project.
+The provider redirect should return to the control-plane OAuth callback, which must then create
+the same opaque CORTEX session as password login. Live OAuth remains blocked until those
+provider credentials are available.
 
 ## Token-security contract
 

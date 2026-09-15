@@ -11,6 +11,7 @@ export type CloudControlConfig = Readonly<{
   sessionCookieName: string;
   sessionTtlSeconds: number;
   cookieSecure: boolean;
+  allowedOrigins: readonly string[];
 }>;
 
 const environments = new Set(["development", "staging", "production"]);
@@ -59,6 +60,13 @@ export function loadCloudControlConfig(
     throw new Error("CORTEX_SESSION_TTL_SECONDS must be at least 300 seconds.");
   }
   const cookieSecure = env.CORTEX_COOKIE_SECURE?.trim() !== "false";
+  const allowedOrigins = (env.CORTEX_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/$/u, ""))
+    .filter(Boolean);
+  if (environment === "production" && allowedOrigins.length === 0) {
+    throw new Error("CORTEX_ALLOWED_ORIGINS is required in production.");
+  }
 
   return {
     host: env.HOST?.trim() || "0.0.0.0",
@@ -70,5 +78,6 @@ export function loadCloudControlConfig(
     sessionCookieName: env.CORTEX_SESSION_COOKIE?.trim() || "cortex_cloud_session",
     sessionTtlSeconds,
     cookieSecure,
+    allowedOrigins,
   };
 }

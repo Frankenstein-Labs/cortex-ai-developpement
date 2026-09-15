@@ -18,4 +18,6 @@ services:
       - key: SUPABASE_PUBLISHABLE_KEY
         sync: false
       - key: CORTEX_COOKIE_SECURE
+      - key: CORTEX_ALLOWED_ORIGINS
+        sync: false
         value: "true"

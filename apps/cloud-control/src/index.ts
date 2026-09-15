@@ -29,14 +29,28 @@ function requestId(request: Request): string {
 }
 
 function response(
+  request: Request,
   body: unknown,
   status: number,
   id: string,
   extraHeaders: HeadersInit = {},
 ): Response {
+  const origin = request.headers.get("origin");
+  const allowed = origin && config.allowedOrigins.includes(origin) ? origin : undefined;
   return Response.json(body, {
     status,
-    headers: { "cache-control": "no-store", "x-request-id": id, ...extraHeaders },
+    headers: {
+      "cache-control": "no-store",
+      "x-request-id": id,
+      ...(allowed
+        ? {
+            "access-control-allow-origin": allowed,
+            "access-control-allow-credentials": "true",
+            vary: "Origin",
+          }
+        : {}),
+      ...extraHeaders,
+    },
   });
 }
 
@@ -82,13 +96,14 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
     const { organizationId } = await ensureCortexUser(sql, identity);
     if (!result.accessToken) {
       return response(
+        request,
         { status: "email_verification_required", ...authSession(identity, organizationId) },
         202,
         id,
       );
     }
     const session = await createCortexSession(sql, identity, config.sessionTtlSeconds);
-    return response(authSession(identity, organizationId), 201, id, {
+    return response(request, authSession(identity, organizationId), 201, id, {
       "set-cookie": sessionCookie(
         config.sessionCookieName,
         session.token,
@@ -116,7 +131,7 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
     };
     const { organizationId } = await ensureCortexUser(sql, identity);
     const session = await createCortexSession(sql, identity, config.sessionTtlSeconds);
-    return response(authSession(identity, organizationId), 200, id, {
+    return response(request, authSession(identity, organizationId), 200, id, {
       "set-cookie": sessionCookie(
         config.sessionCookieName,
         session.token,
@@ -129,13 +144,13 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
   if (request.method === "GET" && pathname === "/api/cloud/auth/session") {
     const identity = await verifyCortexSession(request, sql, config.sessionCookieName);
     const { organizationId } = await ensureCortexUser(sql, identity);
-    return response(authSession(identity, organizationId), 200, id);
+    return response(request, authSession(identity, organizationId), 200, id);
   }
 
   if (request.method === "POST" && pathname === "/api/cloud/auth/logout") {
     const token = readSessionToken(request, config.sessionCookieName);
     if (token) await revokeCortexSession(sql, token);
-    return response({ revoked: true }, 200, id, {
+    return response(request, { revoked: true }, 200, id, {
       "set-cookie": expiredSessionCookie(config.sessionCookieName, config.cookieSecure),
     });
   }
@@ -147,7 +162,7 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
       "OAuth provider configuration is required.",
     );
   }
-  return response({ error: { code: "not_found", message: "Not found." } }, 404, id);
+  return response(request, { error: { code: "not_found", message: "Not found." } }, 404, id);
 }
 
 async function routeCloudApi(
@@ -168,7 +183,7 @@ async function routeCloudApi(
         WHERE m.user_id = ${identity.userId}::uuid AND m.revoked_at IS NULL AND o.deleted_at IS NULL
         ORDER BY o.created_at ASC
       `;
-      return response({ organizations }, 200, id);
+      return response(request, { organizations }, 200, id);
     }
     if (request.method === "GET" && pathname === "/v1/projects") {
       const projects = await tx`
@@ -176,7 +191,7 @@ async function routeCloudApi(
         FROM projects WHERE organization_id = ${tenant.organizationId}::uuid AND deleted_at IS NULL
         ORDER BY updated_at DESC
       `;
-      return response({ projects }, 200, id);
+      return response(request, { projects }, 200, id);
     }
     if (request.method === "POST" && pathname === "/v1/projects") {
       const input = await body(request);
@@ -190,7 +205,7 @@ async function routeCloudApi(
         VALUES (${projectId}::uuid, ${tenant.organizationId}::uuid, ${name}, ${slug}, ${description}, ${tenant.userId}::uuid)
         RETURNING id, organization_id, name, slug, description, created_by_user_id, created_at, updated_at
       `;
-      return response({ project: rows[0] }, 201, id);
+      return response(request, { project: rows[0] }, 201, id);
     }
     const projectMatch = pathname.match(/^\/v1\/projects\/([0-9a-f-]{36})$/u);
     if (request.method === "GET" && projectMatch) {
@@ -200,8 +215,13 @@ async function routeCloudApi(
         LIMIT 1
       `;
       if (!rows[0])
-        return response({ error: { code: "not_found", message: "Project not found." } }, 404, id);
-      return response({ project: rows[0] }, 200, id);
+        return response(
+          request,
+          { error: { code: "not_found", message: "Project not found." } },
+          404,
+          id,
+        );
+      return response(request, { project: rows[0] }, 200, id);
     }
 
     const projectWorkspacesMatch = pathname.match(/^\/v1\/projects\/([0-9a-f-]{36})\/workspaces$/u);
@@ -212,14 +232,19 @@ async function routeCloudApi(
         LIMIT 1
       `;
       if (!projectRows[0])
-        return response({ error: { code: "not_found", message: "Project not found." } }, 404, id);
+        return response(
+          request,
+          { error: { code: "not_found", message: "Project not found." } },
+          404,
+          id,
+        );
       if (request.method === "GET") {
         const workspaces = await tx`
           SELECT id, project_id, organization_id, name, status, region, base_branch, work_branch, created_at, last_active_at, expires_at
           FROM workspaces WHERE project_id = ${projectWorkspacesMatch[1]}::uuid AND organization_id = ${tenant.organizationId}::uuid AND status <> 'destroyed'
           ORDER BY last_active_at DESC
         `;
-        return response({ workspaces }, 200, id);
+        return response(request, { workspaces }, 200, id);
       }
       if (request.method === "POST") {
         requireRole(tenant, "owner", "admin", "member");
@@ -238,6 +263,7 @@ async function routeCloudApi(
         `;
         if (!repositoryRows[0])
           return response(
+            request,
             { error: { code: "not_found", message: "Connected repository not found." } },
             404,
             id,
@@ -249,7 +275,7 @@ async function routeCloudApi(
           VALUES (${workspaceId}::uuid, ${tenant.organizationId}::uuid, ${connectedRepositoryId}::uuid, ${projectWorkspacesMatch[1]}::uuid, ${name}, ${baseBranch}, 'unknown', ${workBranch}, ${region}, 'default', ${tenant.userId}::uuid, now() + interval '7 days')
           RETURNING id, project_id, organization_id, name, status, region, base_branch, work_branch, created_at, last_active_at, expires_at
         `;
-        return response({ workspace: rows[0] }, 201, id);
+        return response(request, { workspace: rows[0] }, 201, id);
       }
     }
 
@@ -264,11 +290,12 @@ async function routeCloudApi(
         `;
         if (!rows[0])
           return response(
+            request,
             { error: { code: "not_found", message: "Workspace not found." } },
             404,
             id,
           );
-        return response({ workspace: rows[0] }, 200, id);
+        return response(request, { workspace: rows[0] }, 200, id);
       }
       requireRole(tenant, "owner", "admin", "member");
       if (request.method === "PATCH") {
@@ -281,11 +308,12 @@ async function routeCloudApi(
         `;
         if (!rows[0])
           return response(
+            request,
             { error: { code: "not_found", message: "Workspace not found." } },
             404,
             id,
           );
-        return response({ workspace: rows[0] }, 200, id);
+        return response(request, { workspace: rows[0] }, 200, id);
       }
       if (request.method === "DELETE") {
         const rows = await tx`
@@ -295,11 +323,12 @@ async function routeCloudApi(
         `;
         if (!rows[0])
           return response(
+            request,
             { error: { code: "not_found", message: "Workspace not found." } },
             404,
             id,
           );
-        return response({ workspace: rows[0] }, 200, id);
+        return response(request, { workspace: rows[0] }, 200, id);
       }
     }
 
@@ -310,16 +339,22 @@ async function routeCloudApi(
         SELECT id FROM workspaces WHERE id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND status <> 'destroyed' LIMIT 1
       `;
       if (!workspaceRows[0])
-        return response({ error: { code: "not_found", message: "Workspace not found." } }, 404, id);
+        return response(
+          request,
+          { error: { code: "not_found", message: "Workspace not found." } },
+          404,
+          id,
+        );
       if (request.method === "GET" && !filesMatch[2]) {
         const files = await tx`
           SELECT id, workspace_id, path, content_hash, version, created_at, updated_at
           FROM cloud_files WHERE workspace_id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND deleted_at IS NULL ORDER BY path
         `;
-        return response({ files }, 200, id);
+        return response(request, { files }, 200, id);
       }
       if (!filesMatch[2])
         return response(
+          request,
           { error: { code: "invalid_request", message: "A file path is required." } },
           400,
           id,
@@ -338,8 +373,13 @@ async function routeCloudApi(
         const rows =
           await tx`SELECT id, workspace_id, path, content, content_hash, version, created_at, updated_at FROM cloud_files WHERE workspace_id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND path = ${filePath} AND deleted_at IS NULL LIMIT 1`;
         if (!rows[0])
-          return response({ error: { code: "not_found", message: "File not found." } }, 404, id);
-        return response({ file: rows[0] }, 200, id);
+          return response(
+            request,
+            { error: { code: "not_found", message: "File not found." } },
+            404,
+            id,
+          );
+        return response(request, { file: rows[0] }, 200, id);
       }
       if (request.method === "POST" || request.method === "PUT" || request.method === "PATCH") {
         requireRole(tenant, "owner", "admin", "member");
@@ -353,6 +393,7 @@ async function routeCloudApi(
         >`SELECT version FROM cloud_files WHERE workspace_id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND path = ${filePath} AND deleted_at IS NULL LIMIT 1`;
         if (existing[0] && expectedVersion !== undefined && existing[0].version !== expectedVersion)
           return response(
+            request,
             { error: { code: "version_conflict", message: "Cloud file version conflict." } },
             409,
             id,
@@ -363,18 +404,23 @@ async function routeCloudApi(
           ON CONFLICT (workspace_id, path) WHERE deleted_at IS NULL DO UPDATE SET content = EXCLUDED.content, content_hash = EXCLUDED.content_hash, version = cloud_files.version + 1, updated_at = now()
           RETURNING id, workspace_id, path, content, content_hash, version, created_at, updated_at
         `;
-        return response({ file: rows[0] }, existing[0] ? 200 : 201, id);
+        return response(request, { file: rows[0] }, existing[0] ? 200 : 201, id);
       }
       if (request.method === "DELETE") {
         requireRole(tenant, "owner", "admin", "member");
         const rows =
           await tx`UPDATE cloud_files SET deleted_at = now(), updated_at = now() WHERE workspace_id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND path = ${filePath} AND deleted_at IS NULL RETURNING id, path, version, deleted_at`;
         if (!rows[0])
-          return response({ error: { code: "not_found", message: "File not found." } }, 404, id);
-        return response({ file: rows[0] }, 200, id);
+          return response(
+            request,
+            { error: { code: "not_found", message: "File not found." } },
+            404,
+            id,
+          );
+        return response(request, { file: rows[0] }, 200, id);
       }
     }
-    return response({ error: { code: "not_found", message: "Not found." } }, 404, id);
+    return response(request, { error: { code: "not_found", message: "Not found." } }, 404, id);
   });
 }
 
@@ -388,14 +434,22 @@ const server = Bun.serve({
     let status = 500;
     let identity: AuthenticatedIdentity | undefined;
     try {
+      if (request.method === "OPTIONS") {
+        status = 204;
+        return response(request, null, status, id, {
+          "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+          "access-control-allow-headers": "content-type,x-request-id",
+          "access-control-max-age": "600",
+        });
+      }
       if (request.method === "GET" && pathname === "/healthz") {
         status = 200;
-        return response({ status: "ok", service: "cortex-cloud-control" }, status, id);
+        return response(request, { status: "ok", service: "cortex-cloud-control" }, status, id);
       }
       if (request.method === "GET" && pathname === "/readyz") {
         await sql`SELECT 1`;
         status = 200;
-        return response({ status: "ready", service: "cortex-cloud-control" }, status, id);
+        return response(request, { status: "ready", service: "cortex-cloud-control" }, status, id);
       }
       if (pathname.startsWith("/api/cloud/auth/")) {
         const result = await routeAuth(request, pathname, id);
@@ -409,11 +463,16 @@ const server = Bun.serve({
         return result;
       }
       status = 404;
-      return response({ error: { code: "not_found", message: "Not found." } }, status, id);
+      return response(request, { error: { code: "not_found", message: "Not found." } }, status, id);
     } catch (cause) {
       if (cause instanceof CloudAuthError) {
         status = cause.status;
-        return response({ error: { code: cause.code, message: cause.message } }, status, id);
+        return response(
+          request,
+          { error: { code: cause.code, message: cause.message } },
+          status,
+          id,
+        );
       }
       console.error(
         JSON.stringify({
@@ -426,6 +485,7 @@ const server = Bun.serve({
       );
       status = 503;
       return response(
+        request,
         { error: { code: "service_unavailable", message: "Service unavailable." } },
         status,
         id,

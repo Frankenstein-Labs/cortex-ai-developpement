@@ -21,4 +21,19 @@ describe("loadCloudControlConfig", () => {
       }),
     ).toMatchObject({ host: "0.0.0.0", port: 9443, environment: "staging" });
   });
+
+  it("requires explicit browser origins in production", () => {
+    const base = {
+      CORTEX_DATABASE_URL: "postgresql://app:secret@db.example/cortex",
+      SUPABASE_URL: "https://ownnbyhsflmdjytwaeqv.supabase.co",
+      SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+      CORTEX_ENVIRONMENT: "production",
+    };
+    expect(() => loadCloudControlConfig(base)).toThrow("CORTEX_ALLOWED_ORIGINS");
+    expect(
+      loadCloudControlConfig({ ...base, CORTEX_ALLOWED_ORIGINS: "https://cloud.example" }),
+    ).toMatchObject({
+      allowedOrigins: ["https://cloud.example"],
+    });
+  });
 });
