@@ -13,17 +13,17 @@ export default async function Navbar() {
       <div className="mx-auto flex h-9 max-w-6xl items-center justify-between gap-2 sm:gap-6">
         <Link
           href="/"
-          aria-label="Synara home"
+          aria-label="CORTEX Cloud home"
           className="flex shrink-0 items-center gap-2 text-[14px] font-medium tracking-[-0.02em] text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)]"
         >
           <Image
-            src="/synara-icon.png"
+            src="/cortex-cloud-icon.png"
             alt=""
             width={22}
             height={22}
             className="rounded-[5px] border border-[var(--divide)]"
           />
-          <span className="hidden sm:inline">Synara</span>
+          <span className="hidden sm:inline">CORTEX Cloud</span>
         </Link>
 
         {/*
@@ -32,7 +32,7 @@ export default async function Navbar() {
         */}
         <div className="hidden min-w-0 flex-1 items-center justify-center gap-3 text-[13px] text-[var(--text-tertiary)] sm:flex sm:gap-6">
           <a
-            href="https://x.com/trySynara"
+            href="https://github.com/Frankenstein-Labs/cortex-ai-developpement"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden shrink-0 transition-colors hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)] sm:inline"

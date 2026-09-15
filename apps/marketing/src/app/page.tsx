@@ -1,5 +1,5 @@
 // FILE: page.tsx
-// Purpose: Public marketing homepage for Synara.
+// Purpose: Public marketing homepage for CORTEX Cloud.
 // Layer: App Router page (server component)
 
 import { SiGithub, SiOpenai } from "react-icons/si";
@@ -105,7 +105,7 @@ export default async function Home() {
                 className="inline-flex items-center gap-2 rounded-full border border-[var(--divide)] px-5 py-2.5 text-[13px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--mock-row)] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)]"
               >
                 <SiGithub className="size-4 shrink-0" aria-hidden="true" />
-                Star on GitHub
+                View on GitHub
               </a>
             </div>
             <p
@@ -119,14 +119,14 @@ export default async function Home() {
               <div className="relative overflow-hidden rounded-xl bg-[var(--block-elevated)] p-2 ring-1 ring-black/5 sm:rounded-2xl sm:p-3 dark:ring-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/synara-ui-light.png"
-                  alt="Synara — local-first command center for parallel coding agents, terminals, previews, diffs, and Git worktrees"
+                  src="/cortex-cloud-ui-light.png"
+                  alt="CORTEX Cloud — AI-powered development workspace for projects, files, Git, terminals, and agent-assisted delivery"
                   className="block h-auto w-full rounded-lg dark:hidden sm:rounded-xl"
                 />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/synara-ui-dark.png"
-                  alt="Synara — local-first command center for parallel coding agents, terminals, previews, diffs, and Git worktrees"
+                  src="/cortex-cloud-ui-dark.png"
+                  alt="CORTEX Cloud — AI-powered development workspace for projects, files, Git, terminals, and agent-assisted delivery"
                   className="hidden h-auto w-full rounded-lg dark:block sm:rounded-xl"
                 />
               </div>

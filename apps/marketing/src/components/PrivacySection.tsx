@@ -23,17 +23,17 @@ const pillars = [
     Icon: LuHardDrive,
     title: "Workspace state stays on your machine",
     description:
-      "Projects, task history, settings, and local application state are stored by the desktop app on your machine rather than in a Synara-hosted workspace account.",
+      "Projects, task history, settings, and local application state are stored by the desktop app on your machine rather than in a CORTEX Cloud account.",
   },
   {
     Icon: LuPlug,
     title: "Provider traffic goes to the selected provider",
     description:
-      "The coding-agent runtime receives the prompts, files, diffs, command output, and tool results required for that provider session. Synara does not proxy normal provider traffic through its own model service.",
+      "The coding-agent runtime receives the prompts, files, diffs, command output, and tool results required for that provider session. CORTEX Cloud does not proxy normal provider traffic through its own model service.",
   },
   {
     Icon: LuShieldCheck,
-    title: "No Synara account is required",
+    title: "Cloud access requires a configured account",
     description:
       "Install the desktop app and use the provider accounts already configured on your machine. Remote access remains an explicit, self-hosted capability.",
   },
@@ -54,9 +54,9 @@ export default function PrivacySection() {
         </p>
         <h2 className={`${heading} mt-3`}>Know where every part of the work goes.</h2>
         <p className={body}>
-          Synara keeps its workspace layer local and connects to the provider runtime you select.
-          The boundary is explicit: local application state stays on your machine, while provider
-          sessions receive the context they need to perform the task.
+          The existing workspace layer remains local and connects to the provider runtime you
+          select. The boundary is explicit: local application state stays on your machine, while
+          provider sessions receive the context they need to perform the task.
         </p>
 
         <div className="mt-12 grid grid-cols-1 border-t border-[var(--divide)] sm:grid-cols-2">
@@ -87,7 +87,7 @@ export default function PrivacySection() {
             <LuArrowRight className="size-4" aria-hidden="true" />
           </Link>
           <a
-            href="https://github.com/Emanuele-web04/synara"
+            href="https://github.com/Frankenstein-Labs/cortex-ai-developpement"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)]"

@@ -2,53 +2,42 @@
 // Purpose: Canonical public product language shared by marketing, metadata,
 //          structured data, FAQs, and AI-readable discovery surfaces.
 // Layer: static content (server/client importable).
-
-export const PRODUCT_NAME = "Synara";
-
-export const PRODUCT_CATEGORY = "The local-first workspace and control plane for coding agents.";
-
-export const PRODUCT_HERO_TITLE = "Run every coding agent in one workspace";
-
+export const PRODUCT_NAME = "CORTEX Cloud";
+export const PRODUCT_CATEGORY =
+  "AI-powered development workspace for projects, agents, code, Git, and execution.";
+export const PRODUCT_HERO_TITLE = "Build software with CORTEX AI";
 export const PRODUCT_HERO_DESCRIPTION =
-  "Synara is the local-first command center for serious agentic work—run every coding agent in parallel and ship without losing context.";
-
+  "CORTEX Cloud is a developer-first workspace where projects, files, Git workflows, terminals, and agent-assisted development come together.";
 export const PRODUCT_META_DESCRIPTION =
-  "Synara is a free, open-source, local-first workspace for coding agents with separate tasks, Git worktrees, terminals, browser verification, diffs, handoffs, and pull-request delivery.";
-
+  "CORTEX Cloud is an AI-powered development workspace for projects, code, Git, terminals, files, and agent-assisted software delivery.";
 export const PRODUCT_DESCRIPTION =
-  "Synara is a free, open-source, local-first workspace and control plane for coding agents. Run Claude Code, Codex, OpenCode, Cursor, Antigravity, Grok Build, Devin CLI, Pi, and Factory Droid across separate tasks with terminals, browser verification, diffs, Git worktrees, handoffs, and pull-request delivery in one desktop app.";
-
+  "CORTEX Cloud brings projects, workspaces, files, Git, terminals, diffs, pull requests, and agent-assisted development into one developer-first environment. Existing local runtime capabilities remain available while the cloud control plane is being connected.";
 export const SUPPORTED_PROVIDERS = [
+  "CORTEX AI",
   "Claude Code",
   "Codex",
   "OpenCode",
   "Cursor",
-  "Antigravity",
-  "Grok Build",
-  "Devin CLI",
-  "Pi",
-  "Factory Droid",
 ] as const;
-
 export const PRODUCT_PILLARS = [
   {
-    title: "One task owns one line of work",
+    title: "Projects with a clear home",
     description:
-      "Keep the objective, provider session, working directory, terminal, browser, diff, and delivery state attached to the same task.",
+      "Keep projects, workspaces, files, tasks, and delivery context organized around the work being shipped.",
   },
   {
-    title: "Providers stay portable",
+    title: "CORTEX AI in the loop",
     description:
-      "Use the coding-agent runtimes and accounts already configured on your machine instead of moving every workflow into one vendor account.",
+      "Use agent-assisted development alongside the code, terminal, Git, and review surfaces that make results inspectable.",
   },
   {
-    title: "Parallel work stays isolated",
+    title: "Reviewable changes",
     description:
-      "Give concurrent tasks separate Git worktrees and visible ownership so agents can build, test, and review without overwriting one another.",
+      "Inspect commands, file changes, diffs, checks, commits, and pull requests before accepting a result.",
   },
   {
-    title: "Results stay reviewable",
+    title: "Tenant-aware foundations",
     description:
-      "Inspect commands, browser evidence, file changes, diffs, checks, commits, and pull requests before accepting the result.",
+      "The cloud control plane is built around organizations, memberships, scoped resources, and database-enforced isolation.",
   },
 ] as const;
