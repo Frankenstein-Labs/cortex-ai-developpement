@@ -28,18 +28,18 @@ CORTEX_DATABASE_URL=postgresql://app:password@127.0.0.1:5432/cortex \
 
 Configuration is fail-fast:
 
-| Variable              | Required | Meaning                                                                          |
-| --------------------- | -------- | -------------------------------------------------------------------------------- |
-| `CORTEX_DATABASE_URL` | yes      | PostgreSQL application-role URL. Never use the migration owner for HTTP traffic. |
-| `SUPABASE_URL` | yes | Canonical Supabase project URL. |
-| `SUPABASE_PUBLISHABLE_KEY` | yes | Supabase publishable key; never use a secret/service-role key here. |
-| `PORT`                 | no       | Listener port; defaults to `8787`.                                               |
-| `HOST`                 | no       | Listener host; defaults to `0.0.0.0`.                                            |
-| `CORTEX_ENVIRONMENT`  | no       | `development`, `staging`, or `production`; defaults to `development`.            |
-| `CORTEX_SESSION_COOKIE` | no | HttpOnly cookie name; defaults to `cortex_cloud_session`. |
-| `CORTEX_SESSION_TTL_SECONDS` | no | Cookie lifetime; defaults to seven days. |
-| `CORTEX_COOKIE_SECURE` | no | Defaults to secure cookies unless explicitly `false`. |
-| `CORTEX_ALLOWED_ORIGINS` | production | Comma-separated HTTPS browser origins allowed to send credentialed requests. Wildcards are not accepted. |
+| Variable                     | Required   | Meaning                                                                                                  |
+| ---------------------------- | ---------- | -------------------------------------------------------------------------------------------------------- |
+| `CORTEX_DATABASE_URL`        | yes        | PostgreSQL application-role URL. Never use the migration owner for HTTP traffic.                         |
+| `SUPABASE_URL`               | yes        | Canonical Supabase project URL.                                                                          |
+| `SUPABASE_PUBLISHABLE_KEY`   | yes        | Supabase publishable key; never use a secret/service-role key here.                                      |
+| `PORT`                       | no         | Listener port; defaults to `8787`.                                                                       |
+| `HOST`                       | no         | Listener host; defaults to `0.0.0.0`.                                                                    |
+| `CORTEX_ENVIRONMENT`         | no         | `development`, `staging`, or `production`; defaults to `development`.                                    |
+| `CORTEX_SESSION_COOKIE`      | no         | HttpOnly cookie name; defaults to `cortex_cloud_session`.                                                |
+| `CORTEX_SESSION_TTL_SECONDS` | no         | Cookie lifetime; defaults to seven days.                                                                 |
+| `CORTEX_COOKIE_SECURE`       | no         | Defaults to secure cookies unless explicitly `false`.                                                    |
+| `CORTEX_ALLOWED_ORIGINS`     | production | Comma-separated HTTPS browser origins allowed to send credentialed requests. Wildcards are not accepted. |
 
 ## Browser and OAuth deployment requirements
 

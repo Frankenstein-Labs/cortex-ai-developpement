@@ -10,16 +10,16 @@ Deploy `apps/cloud-control/Dockerfile` from the repository root. The container l
 
 Required runtime variables are:
 
-| Variable | Required | Value |
-| --- | --- | --- |
-| `CORTEX_DATABASE_URL` | yes | PostgreSQL application-role URL for the canonical Supabase project; never commit it. |
-| `SUPABASE_URL` | yes | `https://ownnbyhsflmdjytwaeqv.supabase.co` |
-| `SUPABASE_PUBLISHABLE_KEY` | yes | The canonical project's publishable key; never use a service-role key. |
-| `CORTEX_ENVIRONMENT` | yes | `production` |
-| `CORTEX_COOKIE_SECURE` | yes | `true` |
-| `CORTEX_ALLOWED_ORIGINS` | yes | Exact HTTPS origin of the deployed CORTEX Web frontend, without a trailing slash. |
-| `CORTEX_SESSION_COOKIE` | no | Defaults to `cortex_cloud_session`. |
-| `CORTEX_SESSION_TTL_SECONDS` | no | Defaults to `604800`. |
+| Variable                     | Required | Value                                                                                |
+| ---------------------------- | -------- | ------------------------------------------------------------------------------------ |
+| `CORTEX_DATABASE_URL`        | yes      | PostgreSQL application-role URL for the canonical Supabase project; never commit it. |
+| `SUPABASE_URL`               | yes      | `https://ownnbyhsflmdjytwaeqv.supabase.co`                                           |
+| `SUPABASE_PUBLISHABLE_KEY`   | yes      | The canonical project's publishable key; never use a service-role key.               |
+| `CORTEX_ENVIRONMENT`         | yes      | `production`                                                                         |
+| `CORTEX_COOKIE_SECURE`       | yes      | `true`                                                                               |
+| `CORTEX_ALLOWED_ORIGINS`     | yes      | Exact HTTPS origin of the deployed CORTEX Web frontend, without a trailing slash.    |
+| `CORTEX_SESSION_COOKIE`      | no       | Defaults to `cortex_cloud_session`.                                                  |
+| `CORTEX_SESSION_TTL_SECONDS` | no       | Defaults to `604800`.                                                                |
 
 After deployment, verify both endpoints. A successful `/healthz` proves process liveness; `/readyz` must also succeed because it verifies PostgreSQL connectivity.
 
