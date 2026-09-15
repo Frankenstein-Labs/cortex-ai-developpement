@@ -57,6 +57,11 @@ export function resolveCloudControlUrl(value: string | undefined, production: bo
   if (production && url.protocol !== "https:") {
     throw new CloudConfigurationError("VITE_CLOUD_CONTROL_URL must use HTTPS in production.");
   }
+  if (url.search || url.hash) {
+    throw new CloudConfigurationError(
+      "VITE_CLOUD_CONTROL_URL must not include a query string or fragment.",
+    );
+  }
   return normalized.replace(/\/+$/u, "");
 }
 

@@ -8,7 +8,7 @@ export function resolveCloudAppUrl(value = process.env.NEXT_PUBLIC_CORTEX_APP_UR
   const normalized = value?.trim() || DEFAULT_CLOUD_APP_URL;
   try {
     const url = new URL(normalized);
-    if (url.protocol !== "https:" && url.protocol !== "http:") {
+    if (url.protocol !== "https:") {
       throw new Error("unsupported protocol");
     }
     if (url.username || url.password || url.search || url.hash) {

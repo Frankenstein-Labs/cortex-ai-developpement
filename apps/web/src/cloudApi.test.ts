@@ -44,4 +44,13 @@ describe("cloudFetch", () => {
       "must use HTTPS in production",
     );
   });
+
+  it.each(["https://control.example?region=us", "https://control.example#api"])(
+    "rejects Cloud Control URLs with a query or fragment: %s",
+    (value) => {
+      expect(() => resolveCloudControlUrl(value, true)).toThrow(
+        "must not include a query string or fragment",
+      );
+    },
+  );
 });
