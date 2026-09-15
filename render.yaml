@@ -20,4 +20,3 @@ services:
       - key: CORTEX_COOKIE_SECURE
       - key: CORTEX_ALLOWED_ORIGINS
         sync: false
-        value: https://cortex-ai-developpement-market-git-db6a4c-18s-projects-030c6a8a.vercel.app

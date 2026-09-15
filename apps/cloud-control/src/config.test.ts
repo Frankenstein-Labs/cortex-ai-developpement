@@ -58,4 +58,20 @@ describe("loadCloudControlConfig", () => {
       }),
     ).toThrow("CORTEX_COOKIE_SAMESITE=none requires secure cookies.");
   });
+
+  it("does not allow insecure cookies or non-origin CORS entries in production", () => {
+    const base = {
+      CORTEX_DATABASE_URL: "postgresql://app:secret@db.example/cortex",
+      SUPABASE_URL: "https://ownnbyhsflmdjytwaeqv.supabase.co",
+      SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+      CORTEX_ENVIRONMENT: "production",
+      CORTEX_ALLOWED_ORIGINS: "https://app.example",
+    };
+    expect(() => loadCloudControlConfig({ ...base, CORTEX_COOKIE_SECURE: "false" })).toThrow(
+      "CORTEX_COOKIE_SECURE must not be false in production.",
+    );
+    expect(() =>
+      loadCloudControlConfig({ ...base, CORTEX_ALLOWED_ORIGINS: "https://app.example/path" }),
+    ).toThrow("entries must be origins without a path.");
+  });
 });

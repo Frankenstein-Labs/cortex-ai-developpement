@@ -4,30 +4,13 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-
-const cloudOrigin = import.meta.env.VITE_CLOUD_CONTROL_URL?.replace(/\/$/u, "") ?? "";
-
-type CloudUser = { id: string; email: string; emailVerified: boolean };
-type CloudOrganization = { id: string; name: string; slug: string; personal: boolean };
-type CloudProject = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  updated_at: string;
-};
-type CloudSession = { user: CloudUser; organizationId: string };
-
-async function cloudFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${cloudOrigin}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: { "content-type": "application/json", ...init?.headers },
-  });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(data?.error?.message ?? "Cloud request failed.");
-  return data as T;
-}
+import {
+  CloudRequestError,
+  cloudFetch,
+  type CloudOrganization,
+  type CloudProject,
+  type CloudSession,
+} from "~/cloudApi";
 
 export const Route = createFileRoute("/cloud")({ component: CloudDashboard });
 
@@ -53,6 +36,10 @@ function CloudDashboard() {
       setProjects(projectList.projects);
       setError(null);
     } catch (cause) {
+      if (cause instanceof CloudRequestError && cause.status === 401) {
+        await navigate({ to: "/login" });
+        return;
+      }
       setError(cause instanceof Error ? cause.message : "Cloud session could not be loaded.");
     } finally {
       setLoading(false);
@@ -74,6 +61,10 @@ function CloudDashboard() {
       setName("");
       await load();
     } catch (cause) {
+      if (cause instanceof CloudRequestError && cause.status === 401) {
+        await navigate({ to: "/login" });
+        return;
+      }
       setError(cause instanceof Error ? cause.message : "Project could not be created.");
     }
   }
@@ -159,7 +150,11 @@ function CloudDashboard() {
                       <p className="font-medium">{project.name}</p>
                       <p className="text-xs text-muted-foreground">/{project.slug}</p>
                     </div>
-                    <Link className="text-sm underline-offset-4 hover:underline" to="/cloud">
+                    <Link
+                      className="text-sm underline-offset-4 hover:underline"
+                      params={{ projectId: project.id }}
+                      to="/cloud/projects/$projectId"
+                    >
                       Open
                     </Link>
                   </div>

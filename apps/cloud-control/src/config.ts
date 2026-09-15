@@ -66,6 +66,9 @@ export function loadCloudControlConfig(
     throw new Error("CORTEX_SESSION_TTL_SECONDS must be at least 300 seconds.");
   }
   const cookieSecure = env.CORTEX_COOKIE_SECURE?.trim() !== "false";
+  if (environment === "production" && !cookieSecure) {
+    throw new Error("CORTEX_COOKIE_SECURE must not be false in production.");
+  }
   const cookieSameSiteValue = env.CORTEX_COOKIE_SAMESITE?.trim().toLowerCase() ?? "lax";
   if (cookieSameSiteValue !== "lax" && cookieSameSiteValue !== "none") {
     throw new Error("CORTEX_COOKIE_SAMESITE must be lax or none.");
@@ -80,6 +83,25 @@ export function loadCloudControlConfig(
     .filter(Boolean);
   if (environment === "production" && allowedOrigins.length === 0) {
     throw new Error("CORTEX_ALLOWED_ORIGINS is required in production.");
+  }
+  for (const origin of allowedOrigins) {
+    let parsedOrigin: URL;
+    try {
+      parsedOrigin = new URL(origin);
+    } catch {
+      throw new Error("CORTEX_ALLOWED_ORIGINS entries must be valid origins.");
+    }
+    if (
+      parsedOrigin.origin !== origin ||
+      parsedOrigin.pathname !== "/" ||
+      parsedOrigin.search ||
+      parsedOrigin.hash
+    ) {
+      throw new Error("CORTEX_ALLOWED_ORIGINS entries must be origins without a path.");
+    }
+    if (environment === "production" && parsedOrigin.protocol !== "https:") {
+      throw new Error("CORTEX_ALLOWED_ORIGINS entries must use HTTPS in production.");
+    }
   }
 
   return {
