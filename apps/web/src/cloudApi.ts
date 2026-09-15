@@ -57,12 +57,13 @@ export function resolveCloudControlUrl(value: string | undefined, production: bo
   if (production && url.protocol !== "https:") {
     throw new CloudConfigurationError("VITE_CLOUD_CONTROL_URL must use HTTPS in production.");
   }
-  if (url.search || url.hash) {
+  if (url.username || url.password || url.search || url.hash) {
     throw new CloudConfigurationError(
-      "VITE_CLOUD_CONTROL_URL must not include a query string or fragment.",
+      "VITE_CLOUD_CONTROL_URL must not include credentials, query, or fragment components.",
     );
   }
-  return normalized.replace(/\/+$/u, "");
+  const pathname = url.pathname.replace(/\/+$/u, "");
+  return `${url.origin}${pathname}`;
 }
 
 function cloudOrigin(): string {
@@ -70,10 +71,12 @@ function cloudOrigin(): string {
 }
 
 export async function cloudFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  if (!headers.has("content-type")) headers.set("content-type", "application/json");
   const response = await fetch(`${cloudOrigin()}${path}`, {
     ...init,
     credentials: "include",
-    headers: { "content-type": "application/json", ...init?.headers },
+    headers,
   });
   const data = await response.json().catch(() => null);
   if (!response.ok) {

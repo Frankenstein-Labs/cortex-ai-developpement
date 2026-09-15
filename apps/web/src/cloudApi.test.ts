@@ -17,13 +17,26 @@ describe("cloudFetch", () => {
 
     await cloudFetch("/v1/organizations");
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://control.example/v1/organizations",
-      expect.objectContaining({
-        credentials: "include",
-        headers: expect.objectContaining({ "content-type": "application/json" }),
-      }),
-    );
+    const [, request] = fetchMock.mock.calls[0] ?? [];
+    expect(request).toEqual(expect.objectContaining({ credentials: "include" }));
+    expect(new Headers(request?.headers).get("content-type")).toBe("application/json");
+  });
+
+  it("preserves HeadersInit values while adding a missing JSON content type", async () => {
+    vi.stubEnv("VITE_CLOUD_CONTROL_URL", "https://control.example");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ organizations: [] }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await cloudFetch("/v1/organizations", {
+      headers: [["x-request-id", "fixture"]],
+    });
+
+    const [, request] = fetchMock.mock.calls[0] ?? [];
+    const headers = new Headers(request?.headers);
+    expect(headers.get("x-request-id")).toBe("fixture");
+    expect(headers.get("content-type")).toBe("application/json");
   });
 
   it("accepts and normalizes an absolute Cloud Control URL", () => {
@@ -45,12 +58,11 @@ describe("cloudFetch", () => {
     );
   });
 
-  it.each(["https://control.example?region=us", "https://control.example#api"])(
-    "rejects Cloud Control URLs with a query or fragment: %s",
-    (value) => {
-      expect(() => resolveCloudControlUrl(value, true)).toThrow(
-        "must not include a query string or fragment",
-      );
-    },
-  );
+  it.each([
+    "https://control.example?tenant=fixture",
+    "https://user:secret@control.example",
+    "https://control.example/v1#fragment",
+  ])("rejects unsafe URL components: %s", (value) => {
+    expect(() => resolveCloudControlUrl(value, false)).toThrow(CloudConfigurationError);
+  });
 });
