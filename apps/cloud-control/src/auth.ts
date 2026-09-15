@@ -21,9 +21,9 @@ export function requireRole(tenant: TenantContext, ...allowed: TenantContext["ro
 }
 
 export class CloudAuthError extends Error {
-  readonly status: 400 | 401 | 403 | 501;
+  readonly status: 400 | 401 | 403 | 409 | 501 | 503;
   readonly code: string;
-  constructor(status: 400 | 401 | 403 | 501, code: string, message: string) {
+  constructor(status: 400 | 401 | 403 | 409 | 501 | 503, code: string, message: string) {
     super(message);
     this.name = "CloudAuthError";
     this.status = status;
@@ -51,17 +51,24 @@ export function readSessionToken(request: Request, cookieName: string): string |
   return token?.trim() || null;
 }
 
+type CookieSameSite = "Lax" | "None";
+
 export function sessionCookie(
   name: string,
   token: string,
   maxAge: number,
   secure: boolean,
+  sameSite: CookieSameSite = "Lax",
 ): string {
-  return `${name}=${encodeURIComponent(token)}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
+  return `${name}=${encodeURIComponent(token)}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=${sameSite}${secure ? "; Secure" : ""}`;
 }
 
-export function expiredSessionCookie(name: string, secure: boolean): string {
-  return `${name}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
+export function expiredSessionCookie(
+  name: string,
+  secure: boolean,
+  sameSite: CookieSameSite = "Lax",
+): string {
+  return `${name}=; Max-Age=0; Path=/; HttpOnly; SameSite=${sameSite}${secure ? "; Secure" : ""}`;
 }
 
 export async function verifyCortexSession(
@@ -106,6 +113,23 @@ export async function createCortexSession(
   return { token, sessionId };
 }
 
+const SUPABASE_AUTH_TIMEOUT_MS = 10_000;
+
+async function supabaseAuthRequest(url: string, init: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SUPABASE_AUTH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new CloudAuthError(503, "supabase_timeout", "Supabase authentication timed out.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function supabasePasswordAuth(
   supabaseUrl: string,
   publishableKey: string,
@@ -116,7 +140,7 @@ export async function supabasePasswordAuth(
   refreshToken?: string;
   user: { id: string; email: string; emailVerified: boolean };
 }> {
-  const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+  const response = await supabaseAuthRequest(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: { apikey: publishableKey, "content-type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -151,7 +175,7 @@ export async function supabaseSignup(
   email: string,
   password: string,
 ): Promise<{ accessToken?: string; userId: string; email: string; emailVerified: boolean }> {
-  const response = await fetch(`${supabaseUrl}/auth/v1/signup`, {
+  const response = await supabaseAuthRequest(`${supabaseUrl}/auth/v1/signup`, {
     method: "POST",
     headers: { apikey: publishableKey, "content-type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -195,7 +219,7 @@ export async function ensureCortexUser(
     `;
     if (existing[0]?.id) return { organizationId: existing[0].id };
     const organizationId = randomUUID();
-    const slug = `cortex-${identity.userId.slice(0, 8)}`;
+    const slug = `cortex-${identity.userId}`;
     const name = `${identity.email}'s Organization`;
     await tx`
       INSERT INTO organizations (id, slug, name, personal_owner_user_id)
@@ -214,6 +238,18 @@ export async function resolveTenantContext(
   identity: AuthenticatedIdentity,
   requestedOrganizationId?: string,
 ): Promise<TenantContext> {
+  if (
+    requestedOrganizationId &&
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
+      requestedOrganizationId,
+    )
+  ) {
+    throw new CloudAuthError(
+      400,
+      "invalid_organization_id",
+      "organizationId must be a valid UUID.",
+    );
+  }
   const rows = await sql<{ organization_id: string; role: TenantContext["role"] }[]>`
     SELECT organization_id, role::text AS role
     FROM memberships

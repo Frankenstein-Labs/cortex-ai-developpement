@@ -33,9 +33,9 @@ const pillars = [
   },
   {
     Icon: LuShieldCheck,
-    title: "Cloud access requires a configured account",
+    title: "Cloud access requires a separate CORTEX Cloud account",
     description:
-      "Install the desktop app and use the provider accounts already configured on your machine. Remote access remains an explicit, self-hosted capability.",
+      "CORTEX Cloud requires its own account, separate from the provider accounts configured on your machine. Local workspace state remains on your machine, while remote access is an explicit, self-hosted capability.",
   },
   {
     Icon: LuEyeOff,

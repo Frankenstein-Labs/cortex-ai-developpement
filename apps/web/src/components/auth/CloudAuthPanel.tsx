@@ -60,14 +60,19 @@ export function CloudAuthPanel({
 
     setSubmitting(true);
     try {
-      await gateway.submit(mode, values);
-      setNotice(
-        isSignup
-          ? "Check your inbox to verify your email before opening your first workspace."
-          : "You are signed in. Opening your cloud workspace…",
-      );
-      setNoticeIsError(false);
-      await navigate({ to: "/cloud" });
+      const session = await gateway.submit(mode, values);
+      if (session.sessionCreated) {
+        setNotice(
+          isSignup
+            ? "Your account is ready. Opening your cloud workspace…"
+            : "You are signed in. Opening your cloud workspace…",
+        );
+        setNoticeIsError(false);
+        await navigate({ to: "/cloud" });
+      } else {
+        setNotice("Check your inbox to verify your email before opening your first workspace.");
+        setNoticeIsError(false);
+      }
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Cloud sign-in could not be completed.");
       setNoticeIsError(true);

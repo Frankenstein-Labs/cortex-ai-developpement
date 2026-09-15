@@ -14,4 +14,6 @@ AS $$
   LIMIT 1
 $$;
 REVOKE ALL ON FUNCTION app_resolve_web_session(BYTEA) FROM PUBLIC;
+-- The HTTP application role is `app`, as used by CORTEX_DATABASE_URL.
+GRANT EXECUTE ON FUNCTION app_resolve_web_session(BYTEA) TO app;
 COMMIT;

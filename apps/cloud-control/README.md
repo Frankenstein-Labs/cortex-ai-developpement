@@ -9,8 +9,10 @@ replacement for the local-first `apps/server` runtime.
 - `GET /readyz` verifies PostgreSQL connectivity.
 - `POST /api/cloud/auth/signup` and `POST /api/cloud/auth/login` use Supabase Auth,
   then idempotently provision the CORTEX user, personal organization, and owner membership.
-- `GET /api/cloud/auth/session` verifies the HttpOnly Supabase access-token cookie with
-  Supabase's `/auth/v1/user` endpoint.
+- `GET /api/cloud/auth/session` reads the opaque `CORTEX` HttpOnly cookie, hashes it with
+  SHA-256, verifies it through `verifyCortexSession`, and resolves the identity with
+  `app_resolve_web_session`; it never treats the cookie as a Supabase access token and
+  never calls Supabase's `/auth/v1/user` endpoint.
 - `POST /api/cloud/auth/logout` clears the application cookie.
 - `/v1/organizations` and `/v1/projects` require a verified identity and execute inside a
   transaction-scoped `synara.user_id` / `synara.organization_id` context.
@@ -39,6 +41,7 @@ Configuration is fail-fast:
 | `CORTEX_SESSION_COOKIE`      | no         | HttpOnly cookie name; defaults to `cortex_cloud_session`.                                                |
 | `CORTEX_SESSION_TTL_SECONDS` | no         | Cookie lifetime; defaults to seven days.                                                                 |
 | `CORTEX_COOKIE_SECURE`       | no         | Defaults to secure cookies unless explicitly `false`.                                                    |
+| `CORTEX_COOKIE_SAMESITE`     | no         | `lax` by default; use `none` with secure cookies for cross-site browser deployments.                     |
 | `CORTEX_ALLOWED_ORIGINS`     | production | Comma-separated HTTPS browser origins allowed to send credentialed requests. Wildcards are not accepted. |
 
 ## Browser and OAuth deployment requirements

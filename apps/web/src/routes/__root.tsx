@@ -271,7 +271,7 @@ function RootRouteView() {
     </>
   );
 
-  if (compatibilityIssue) {
+  if (compatibilityIssue && pathname !== "/cloud") {
     return (
       <>
         <TransportCompatibilityView issue={compatibilityIssue} />

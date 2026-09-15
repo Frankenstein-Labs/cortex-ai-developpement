@@ -9,4 +9,6 @@ AS $$
   WHERE token_hash = candidate_hash AND revoked_at IS NULL
 $$;
 REVOKE ALL ON FUNCTION app_revoke_web_session(BYTEA) FROM PUBLIC;
+-- The HTTP application role is `app`, as used by CORTEX_DATABASE_URL.
+GRANT EXECUTE ON FUNCTION app_revoke_web_session(BYTEA) TO app;
 COMMIT;

@@ -69,10 +69,15 @@ function textField(value: unknown, name: string): string {
   return value.trim();
 }
 
-function authSession(identity: AuthenticatedIdentity, organizationId: string) {
+function authSession(
+  identity: AuthenticatedIdentity,
+  organizationId: string,
+  sessionCreated: boolean,
+) {
   return {
     user: { id: identity.userId, email: identity.email, emailVerified: identity.emailVerified },
     organizationId,
+    sessionCreated,
   };
 }
 
@@ -97,18 +102,19 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
     if (!result.accessToken) {
       return response(
         request,
-        { status: "email_verification_required", ...authSession(identity, organizationId) },
+        { status: "email_verification_required", ...authSession(identity, organizationId, false) },
         202,
         id,
       );
     }
     const session = await createCortexSession(sql, identity, config.sessionTtlSeconds);
-    return response(request, authSession(identity, organizationId), 201, id, {
+    return response(request, authSession(identity, organizationId, true), 201, id, {
       "set-cookie": sessionCookie(
         config.sessionCookieName,
         session.token,
         config.sessionTtlSeconds,
         config.cookieSecure,
+        config.cookieSameSite,
       ),
     });
   }
@@ -131,12 +137,13 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
     };
     const { organizationId } = await ensureCortexUser(sql, identity);
     const session = await createCortexSession(sql, identity, config.sessionTtlSeconds);
-    return response(request, authSession(identity, organizationId), 200, id, {
+    return response(request, authSession(identity, organizationId, true), 200, id, {
       "set-cookie": sessionCookie(
         config.sessionCookieName,
         session.token,
         config.sessionTtlSeconds,
         config.cookieSecure,
+        config.cookieSameSite,
       ),
     });
   }
@@ -144,14 +151,18 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
   if (request.method === "GET" && pathname === "/api/cloud/auth/session") {
     const identity = await verifyCortexSession(request, sql, config.sessionCookieName);
     const { organizationId } = await ensureCortexUser(sql, identity);
-    return response(request, authSession(identity, organizationId), 200, id);
+    return response(request, authSession(identity, organizationId, true), 200, id);
   }
 
   if (request.method === "POST" && pathname === "/api/cloud/auth/logout") {
     const token = readSessionToken(request, config.sessionCookieName);
     if (token) await revokeCortexSession(sql, token);
     return response(request, { revoked: true }, 200, id, {
-      "set-cookie": expiredSessionCookie(config.sessionCookieName, config.cookieSecure),
+      "set-cookie": expiredSessionCookie(
+        config.sessionCookieName,
+        config.cookieSecure,
+        config.cookieSameSite,
+      ),
     });
   }
 
@@ -200,11 +211,29 @@ async function routeCloudApi(
       const description =
         typeof input.description === "string" ? input.description.trim() || null : null;
       const projectId = crypto.randomUUID();
-      const rows = await tx`
-        INSERT INTO projects (id, organization_id, name, slug, description, created_by_user_id)
-        VALUES (${projectId}::uuid, ${tenant.organizationId}::uuid, ${name}, ${slug}, ${description}, ${tenant.userId}::uuid)
-        RETURNING id, organization_id, name, slug, description, created_by_user_id, created_at, updated_at
-      `;
+      let rows;
+      try {
+        rows = await tx`
+          INSERT INTO projects (id, organization_id, name, slug, description, created_by_user_id)
+          VALUES (${projectId}::uuid, ${tenant.organizationId}::uuid, ${name}, ${slug}, ${description}, ${tenant.userId}::uuid)
+          RETURNING id, organization_id, name, slug, description, created_by_user_id, created_at, updated_at
+        `;
+      } catch (cause) {
+        const error = cause as { code?: string; constraint?: string; detail?: string };
+        if (
+          error.code === "23505" &&
+          (error.constraint === "projects_active_organization_slug_key" ||
+            error.constraint === "projects_active_org_slug_idx" ||
+            error.detail?.includes("(organization_id, slug)"))
+        ) {
+          throw new CloudAuthError(
+            409,
+            "slug_conflict",
+            "A project with this slug already exists in the organization.",
+          );
+        }
+        throw cause;
+      }
       return response(request, { project: rows[0] }, 201, id);
     }
     const projectMatch = pathname.match(/^\/v1\/projects\/([0-9a-f-]{36})$/u);
