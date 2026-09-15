@@ -2,15 +2,20 @@
 // Purpose: CORTEX Cloud control-plane HTTP boundary.
 import { SQL } from "bun";
 import { loadCloudControlConfig } from "./config";
+import { hashCloudFileContent, normalizeCloudFilePath } from "./cloudFiles";
 import {
   CloudAuthError,
+  createCortexSession,
   ensureCortexUser,
+  readSessionToken,
   resolveTenantContext,
+  requireRole,
+  revokeCortexSession,
   sessionCookie,
   expiredSessionCookie,
   supabasePasswordAuth,
   supabaseSignup,
-  verifySupabaseToken,
+  verifyCortexSession,
   withTenantTransaction,
   type AuthenticatedIdentity,
 } from "./auth";
@@ -72,7 +77,6 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
       userId: result.userId,
       email: result.email,
       emailVerified: result.emailVerified,
-      sessionToken: result.accessToken ?? "",
       sessionId: crypto.randomUUID(),
     };
     const { organizationId } = await ensureCortexUser(sql, identity);
@@ -83,10 +87,11 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
         id,
       );
     }
+    const session = await createCortexSession(sql, identity, config.sessionTtlSeconds);
     return response(authSession(identity, organizationId), 201, id, {
       "set-cookie": sessionCookie(
         config.sessionCookieName,
-        result.accessToken,
+        session.token,
         config.sessionTtlSeconds,
         config.cookieSecure,
       ),
@@ -107,14 +112,14 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
       userId: result.user.id,
       email: result.user.email,
       emailVerified: result.user.emailVerified,
-      sessionToken: result.accessToken,
       sessionId: crypto.randomUUID(),
     };
     const { organizationId } = await ensureCortexUser(sql, identity);
+    const session = await createCortexSession(sql, identity, config.sessionTtlSeconds);
     return response(authSession(identity, organizationId), 200, id, {
       "set-cookie": sessionCookie(
         config.sessionCookieName,
-        result.accessToken,
+        session.token,
         config.sessionTtlSeconds,
         config.cookieSecure,
       ),
@@ -122,17 +127,14 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
   }
 
   if (request.method === "GET" && pathname === "/api/cloud/auth/session") {
-    const identity = await verifySupabaseToken(
-      request,
-      config.supabaseUrl,
-      config.supabasePublishableKey,
-      config.sessionCookieName,
-    );
+    const identity = await verifyCortexSession(request, sql, config.sessionCookieName);
     const { organizationId } = await ensureCortexUser(sql, identity);
     return response(authSession(identity, organizationId), 200, id);
   }
 
   if (request.method === "POST" && pathname === "/api/cloud/auth/logout") {
+    const token = readSessionToken(request, config.sessionCookieName);
+    if (token) await revokeCortexSession(sql, token);
     return response({ revoked: true }, 200, id, {
       "set-cookie": expiredSessionCookie(config.sessionCookieName, config.cookieSecure),
     });
@@ -201,6 +203,177 @@ async function routeCloudApi(
         return response({ error: { code: "not_found", message: "Project not found." } }, 404, id);
       return response({ project: rows[0] }, 200, id);
     }
+
+    const projectWorkspacesMatch = pathname.match(/^\/v1\/projects\/([0-9a-f-]{36})\/workspaces$/u);
+    if (projectWorkspacesMatch) {
+      const projectRows = await tx`
+        SELECT id FROM projects
+        WHERE id = ${projectWorkspacesMatch[1]}::uuid AND organization_id = ${tenant.organizationId}::uuid AND deleted_at IS NULL
+        LIMIT 1
+      `;
+      if (!projectRows[0])
+        return response({ error: { code: "not_found", message: "Project not found." } }, 404, id);
+      if (request.method === "GET") {
+        const workspaces = await tx`
+          SELECT id, project_id, organization_id, name, status, region, base_branch, work_branch, created_at, last_active_at, expires_at
+          FROM workspaces WHERE project_id = ${projectWorkspacesMatch[1]}::uuid AND organization_id = ${tenant.organizationId}::uuid AND status <> 'destroyed'
+          ORDER BY last_active_at DESC
+        `;
+        return response({ workspaces }, 200, id);
+      }
+      if (request.method === "POST") {
+        requireRole(tenant, "owner", "admin", "member");
+        const input = await body(request);
+        const name = textField(input.name, "name");
+        const connectedRepositoryId = textField(
+          input.connectedRepositoryId,
+          "connectedRepositoryId",
+        );
+        const baseBranch = textField(input.baseBranch ?? "main", "baseBranch");
+        const region = textField(input.region ?? "eu-central-1", "region");
+        const repositoryRows = await tx`
+          SELECT id, default_branch FROM connected_repositories
+          WHERE id = ${connectedRepositoryId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND revoked_at IS NULL
+          LIMIT 1
+        `;
+        if (!repositoryRows[0])
+          return response(
+            { error: { code: "not_found", message: "Connected repository not found." } },
+            404,
+            id,
+          );
+        const workspaceId = crypto.randomUUID();
+        const workBranch = `cortex/${workspaceId.slice(0, 8)}`;
+        const rows = await tx`
+          INSERT INTO workspaces (id, organization_id, connected_repository_id, project_id, name, base_branch, base_sha, work_branch, region, quota_policy_id, created_by_user_id, expires_at)
+          VALUES (${workspaceId}::uuid, ${tenant.organizationId}::uuid, ${connectedRepositoryId}::uuid, ${projectWorkspacesMatch[1]}::uuid, ${name}, ${baseBranch}, 'unknown', ${workBranch}, ${region}, 'default', ${tenant.userId}::uuid, now() + interval '7 days')
+          RETURNING id, project_id, organization_id, name, status, region, base_branch, work_branch, created_at, last_active_at, expires_at
+        `;
+        return response({ workspace: rows[0] }, 201, id);
+      }
+    }
+
+    const workspaceMatch = pathname.match(/^\/v1\/workspaces\/([0-9a-f-]{36})$/u);
+    if (workspaceMatch) {
+      const workspaceId = workspaceMatch[1];
+      if (request.method === "GET") {
+        const rows = await tx`
+          SELECT id, project_id, organization_id, name, status, region, base_branch, work_branch, created_at, last_active_at, expires_at
+          FROM workspaces WHERE id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND status <> 'destroyed'
+          LIMIT 1
+        `;
+        if (!rows[0])
+          return response(
+            { error: { code: "not_found", message: "Workspace not found." } },
+            404,
+            id,
+          );
+        return response({ workspace: rows[0] }, 200, id);
+      }
+      requireRole(tenant, "owner", "admin", "member");
+      if (request.method === "PATCH") {
+        const input = await body(request);
+        const name = textField(input.name, "name");
+        const rows = await tx`
+          UPDATE workspaces SET name = ${name}, last_active_at = now()
+          WHERE id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND status <> 'destroyed'
+          RETURNING id, project_id, organization_id, name, status, region, base_branch, work_branch, created_at, last_active_at, expires_at
+        `;
+        if (!rows[0])
+          return response(
+            { error: { code: "not_found", message: "Workspace not found." } },
+            404,
+            id,
+          );
+        return response({ workspace: rows[0] }, 200, id);
+      }
+      if (request.method === "DELETE") {
+        const rows = await tx`
+          UPDATE workspaces SET status = 'destroyed', destroyed_at = now(), termination_reason = 'user-request'
+          WHERE id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND status <> 'destroyed'
+          RETURNING id, status, destroyed_at
+        `;
+        if (!rows[0])
+          return response(
+            { error: { code: "not_found", message: "Workspace not found." } },
+            404,
+            id,
+          );
+        return response({ workspace: rows[0] }, 200, id);
+      }
+    }
+
+    const filesMatch = pathname.match(/^\/v1\/workspaces\/([0-9a-f-]{36})\/files(?:\/(.*))?$/u);
+    if (filesMatch) {
+      const workspaceId = filesMatch[1];
+      const workspaceRows = await tx`
+        SELECT id FROM workspaces WHERE id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND status <> 'destroyed' LIMIT 1
+      `;
+      if (!workspaceRows[0])
+        return response({ error: { code: "not_found", message: "Workspace not found." } }, 404, id);
+      if (request.method === "GET" && !filesMatch[2]) {
+        const files = await tx`
+          SELECT id, workspace_id, path, content_hash, version, created_at, updated_at
+          FROM cloud_files WHERE workspace_id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND deleted_at IS NULL ORDER BY path
+        `;
+        return response({ files }, 200, id);
+      }
+      if (!filesMatch[2])
+        return response(
+          { error: { code: "invalid_request", message: "A file path is required." } },
+          400,
+          id,
+        );
+      let filePath: string;
+      try {
+        filePath = normalizeCloudFilePath(`/${filesMatch[2]}`);
+      } catch (error) {
+        throw new CloudAuthError(
+          400,
+          "invalid_path",
+          error instanceof Error ? error.message : "Invalid file path.",
+        );
+      }
+      if (request.method === "GET") {
+        const rows =
+          await tx`SELECT id, workspace_id, path, content, content_hash, version, created_at, updated_at FROM cloud_files WHERE workspace_id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND path = ${filePath} AND deleted_at IS NULL LIMIT 1`;
+        if (!rows[0])
+          return response({ error: { code: "not_found", message: "File not found." } }, 404, id);
+        return response({ file: rows[0] }, 200, id);
+      }
+      if (request.method === "POST" || request.method === "PUT" || request.method === "PATCH") {
+        requireRole(tenant, "owner", "admin", "member");
+        const input = await body(request);
+        const content =
+          typeof input.content === "string" ? input.content : textField(input.content, "content");
+        const expectedVersion =
+          typeof input.expectedVersion === "number" ? input.expectedVersion : undefined;
+        const existing = await tx<
+          { version: number }[]
+        >`SELECT version FROM cloud_files WHERE workspace_id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND path = ${filePath} AND deleted_at IS NULL LIMIT 1`;
+        if (existing[0] && expectedVersion !== undefined && existing[0].version !== expectedVersion)
+          return response(
+            { error: { code: "version_conflict", message: "Cloud file version conflict." } },
+            409,
+            id,
+          );
+        const rows = await tx`
+          INSERT INTO cloud_files (id, organization_id, workspace_id, path, content, content_hash, version)
+          VALUES (${crypto.randomUUID()}::uuid, ${tenant.organizationId}::uuid, ${workspaceId}::uuid, ${filePath}, ${content}, ${hashCloudFileContent(content)}, 1)
+          ON CONFLICT (workspace_id, path) WHERE deleted_at IS NULL DO UPDATE SET content = EXCLUDED.content, content_hash = EXCLUDED.content_hash, version = cloud_files.version + 1, updated_at = now()
+          RETURNING id, workspace_id, path, content, content_hash, version, created_at, updated_at
+        `;
+        return response({ file: rows[0] }, existing[0] ? 200 : 201, id);
+      }
+      if (request.method === "DELETE") {
+        requireRole(tenant, "owner", "admin", "member");
+        const rows =
+          await tx`UPDATE cloud_files SET deleted_at = now(), updated_at = now() WHERE workspace_id = ${workspaceId}::uuid AND organization_id = ${tenant.organizationId}::uuid AND path = ${filePath} AND deleted_at IS NULL RETURNING id, path, version, deleted_at`;
+        if (!rows[0])
+          return response({ error: { code: "not_found", message: "File not found." } }, 404, id);
+        return response({ file: rows[0] }, 200, id);
+      }
+    }
     return response({ error: { code: "not_found", message: "Not found." } }, 404, id);
   });
 }
@@ -230,12 +403,7 @@ const server = Bun.serve({
         return result;
       }
       if (pathname.startsWith("/v1/")) {
-        identity = await verifySupabaseToken(
-          request,
-          config.supabaseUrl,
-          config.supabasePublishableKey,
-          config.sessionCookieName,
-        );
+        identity = await verifyCortexSession(request, sql, config.sessionCookieName);
         const result = await routeCloudApi(request, pathname, identity, id);
         status = result.status;
         return result;

@@ -1,11 +1,10 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type { SQL } from "bun";
 
 export type AuthenticatedIdentity = Readonly<{
   userId: string;
   email: string;
   emailVerified: boolean;
-  sessionToken: string;
   sessionId: string;
 }>;
 
@@ -14,6 +13,12 @@ export type TenantContext = Readonly<{
   organizationId: string;
   role: "owner" | "admin" | "member" | "viewer";
 }>;
+
+export function requireRole(tenant: TenantContext, ...allowed: TenantContext["role"][]): void {
+  if (!allowed.includes(tenant.role)) {
+    throw new CloudAuthError(403, "forbidden", "You do not have permission for this action.");
+  }
+}
 
 export class CloudAuthError extends Error {
   readonly status: 400 | 401 | 403 | 501;
@@ -59,32 +64,46 @@ export function expiredSessionCookie(name: string, secure: boolean): string {
   return `${name}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
 }
 
-export async function verifySupabaseToken(
+export async function verifyCortexSession(
   request: Request,
-  supabaseUrl: string,
-  publishableKey: string,
+  sql: SQL,
   cookieName: string,
 ): Promise<AuthenticatedIdentity> {
   const token = readSessionToken(request, cookieName);
   if (!token) throw new CloudAuthError(401, "unauthorized", "Authentication required.");
-  const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { apikey: publishableKey, authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) throw new CloudAuthError(401, "unauthorized", "Authentication required.");
-  const user = (await response.json()) as {
-    id?: string;
-    email?: string;
-    email_confirmed_at?: string | null;
-  };
-  if (!user.id || !user.email)
-    throw new CloudAuthError(401, "unauthorized", "Authentication required.");
+  const rows = await sql<
+    { session_id: string; user_id: string; email: string; email_verified: boolean }[]
+  >`
+    SELECT session_id, user_id, email, email_verified
+    FROM app_resolve_web_session(${digestSession(token)})
+    LIMIT 1
+  `;
+  const session = rows[0];
+  if (!session) throw new CloudAuthError(401, "unauthorized", "Authentication required.");
   return {
-    userId: user.id,
-    email: user.email,
-    emailVerified: Boolean(user.email_confirmed_at),
-    sessionToken: token,
-    sessionId: randomUUID(),
+    userId: session.user_id,
+    email: session.email,
+    emailVerified: session.email_verified,
+    sessionId: session.session_id,
   };
+}
+
+export async function createCortexSession(
+  sql: SQL,
+  identity: Pick<AuthenticatedIdentity, "userId" | "email" | "emailVerified">,
+  ttlSeconds: number,
+): Promise<{ token: string; sessionId: string }> {
+  const token = randomBytes(32).toString("base64url");
+  const sessionId = randomUUID();
+  const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+  await sql.begin(async (tx) => {
+    await tx`SELECT set_config('synara.user_id', ${identity.userId}, true)`;
+    await tx`
+      INSERT INTO web_sessions (id, user_id, token_hash, expires_at)
+      VALUES (${sessionId}::uuid, ${identity.userId}::uuid, ${digestSession(token)}, ${expiresAt})
+    `;
+  });
+  return { token, sessionId };
 }
 
 export async function supabasePasswordAuth(
@@ -151,6 +170,10 @@ export async function supabaseSignup(
   };
   if (typeof body.access_token === "string") result.accessToken = body.access_token;
   return result;
+}
+
+export async function revokeCortexSession(sql: SQL, token: string): Promise<void> {
+  await sql`SELECT app_revoke_web_session(${digestSession(token)})`;
 }
 
 export async function ensureCortexUser(

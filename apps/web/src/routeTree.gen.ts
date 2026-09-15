@@ -9,8 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as CloudRouteImport } from './routes/cloud'
 import { Route as ChatRouteImport } from './routes/_chat'
 import { Route as ChatIndexRouteImport } from './routes/_chat.index'
 import { Route as ChatSettingsRouteImport } from './routes/_chat.settings'
@@ -25,8 +26,9 @@ import { Route as ChatAutomationsIndexRouteImport } from './routes/_chat.automat
 import { Route as ChatKanbanProjectIdRouteImport } from './routes/_chat.kanban.$projectId'
 import { Route as ChatAutomationsAutomationIdRouteImport } from './routes/_chat.automations.$automationId'
 
-const ChatRoute = ChatRouteImport.update({
-  id: '/_chat',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -34,9 +36,13 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
+const CloudRoute = CloudRouteImport.update({
+  id: '/cloud',
+  path: '/cloud',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/_chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatIndexRoute = ChatIndexRouteImport.update({
@@ -102,9 +108,10 @@ const ChatAutomationsAutomationIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof ChatIndexRoute
+  '/cloud': typeof CloudRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/': typeof ChatIndexRoute
   '/$threadId': typeof ChatThreadIdRoute
   '/automations': typeof ChatAutomationsRouteWithChildren
   '/plugins': typeof ChatPluginsRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/studio/': typeof ChatStudioIndexRoute
 }
 export interface FileRoutesByTo {
+  '/cloud': typeof CloudRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/$threadId': typeof ChatThreadIdRoute
@@ -133,9 +141,10 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_chat': typeof ChatRouteWithChildren
+  '/cloud': typeof CloudRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/_chat': typeof ChatRouteWithChildren
   '/_chat/$threadId': typeof ChatThreadIdRoute
   '/_chat/automations': typeof ChatAutomationsRouteWithChildren
   '/_chat/plugins': typeof ChatPluginsRoute
@@ -152,9 +161,10 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
+    | '/cloud'
     | '/login'
     | '/signup'
-    | '/'
     | '/$threadId'
     | '/automations'
     | '/plugins'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/studio/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/cloud'
     | '/login'
     | '/signup'
     | '/$threadId'
@@ -182,9 +193,10 @@ export interface FileRouteTypes {
     | '/studio'
   id:
     | '__root__'
+    | '/_chat'
+    | '/cloud'
     | '/login'
     | '/signup'
-    | '/_chat'
     | '/_chat/$threadId'
     | '/_chat/automations'
     | '/_chat/plugins'
@@ -200,13 +212,21 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  ChatRoute: typeof ChatRouteWithChildren
+  CloudRoute: typeof CloudRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
-  ChatRoute: typeof ChatRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -214,11 +234,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
+    '/cloud': {
+      id: '/cloud'
+      path: '/cloud'
+      fullPath: '/cloud'
+      preLoaderRoute: typeof CloudRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_chat': {
@@ -367,9 +387,10 @@ const ChatRouteChildren: ChatRouteChildren = {
 const ChatRouteWithChildren = ChatRoute._addFileChildren(ChatRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  ChatRoute: ChatRouteWithChildren,
+  CloudRoute: CloudRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
-  ChatRoute: ChatRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

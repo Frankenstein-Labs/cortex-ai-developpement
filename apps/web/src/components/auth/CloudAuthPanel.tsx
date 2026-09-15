@@ -9,7 +9,7 @@ import {
   IconEyeOff,
   IconLock,
 } from "@tabler/icons-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
 import { cloudAuthGateway, type CloudAuthGateway } from "~/cloudAuthApi";
@@ -35,6 +35,7 @@ export function CloudAuthPanel({
   readonly mode: CloudAuthMode;
   readonly gateway?: CloudAuthGateway;
 }) {
+  const navigate = useNavigate();
   const [values, setValues] = useState<CloudAuthValues>(initialValues);
   const [errors, setErrors] = useState<CloudAuthErrors>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -66,6 +67,7 @@ export function CloudAuthPanel({
           : "You are signed in. Opening your cloud workspace…",
       );
       setNoticeIsError(false);
+      await navigate({ to: "/cloud" });
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Cloud sign-in could not be completed.");
       setNoticeIsError(true);
