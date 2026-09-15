@@ -4,16 +4,14 @@ import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { resolveCloudAppUrl } from "@/lib/cloudAppUrl";
 
 const links = [
   { href: "/install", label: "Install" },
   { href: "/docs", label: "Docs" },
   { href: "/changelog", label: "Changelog" },
 ] as const;
-const cloudAppUrl = (process.env.NEXT_PUBLIC_CORTEX_APP_URL ?? "https://app.trysynara.com").replace(
-  /\/$/u,
-  "",
-);
+const cloudAppUrl = resolveCloudAppUrl();
 
 export default function MobileNav() {
   const [open, setOpen] = useState(false);

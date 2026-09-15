@@ -14,20 +14,32 @@ function CloudWorkspacePage() {
   const [workspace, setWorkspace] = useState<CloudWorkspace | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+
     void (async () => {
       try {
-        setWorkspace(
-          (await cloudFetch<{ workspace: CloudWorkspace }>(`/v1/workspaces/${workspaceId}`))
-            .workspace,
+        const result = await cloudFetch<{ workspace: CloudWorkspace }>(
+          `/v1/workspaces/${workspaceId}`,
+          { signal: controller.signal },
         );
+        if (!active) return;
+        setWorkspace(result.workspace);
       } catch (cause) {
+        if (!active || (cause instanceof DOMException && cause.name === "AbortError")) return;
         if (cause instanceof CloudRequestError && cause.status === 401) {
           await navigate({ to: "/login" });
           return;
         }
+        if (!active) return;
         setError(cause instanceof Error ? cause.message : "Workspace could not be loaded.");
       }
     })();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [navigate, workspaceId]);
 
   return (

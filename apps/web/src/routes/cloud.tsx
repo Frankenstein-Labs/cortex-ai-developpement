@@ -61,6 +61,10 @@ function CloudDashboard() {
       setName("");
       await load();
     } catch (cause) {
+      if (cause instanceof CloudRequestError && cause.status === 401) {
+        await navigate({ to: "/login" });
+        return;
+      }
       setError(cause instanceof Error ? cause.message : "Project could not be created.");
     }
   }

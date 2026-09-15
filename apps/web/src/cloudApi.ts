@@ -32,8 +32,39 @@ export class CloudRequestError extends Error {
   }
 }
 
+export class CloudConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CloudConfigurationError";
+  }
+}
+
+export function resolveCloudControlUrl(value: string | undefined, production: boolean): string {
+  const normalized = value?.trim();
+  if (!normalized) {
+    throw new CloudConfigurationError("VITE_CLOUD_CONTROL_URL must be configured.");
+  }
+
+  let url: URL;
+  try {
+    url = new URL(normalized);
+  } catch {
+    throw new CloudConfigurationError("VITE_CLOUD_CONTROL_URL must be an absolute URL.");
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new CloudConfigurationError("VITE_CLOUD_CONTROL_URL must use HTTP or HTTPS.");
+  }
+  if (production && url.protocol !== "https:") {
+    throw new CloudConfigurationError("VITE_CLOUD_CONTROL_URL must use HTTPS in production.");
+  }
+  return normalized.replace(/\/+$/u, "");
+}
+
 function cloudOrigin(): string {
-  return import.meta.env.VITE_CLOUD_CONTROL_URL?.replace(/\/$/u, "") ?? "";
+  return resolveCloudControlUrl(
+    import.meta.env.VITE_CLOUD_CONTROL_URL,
+    import.meta.env.PROD,
+  );
 }
 
 export async function cloudFetch<T>(path: string, init?: RequestInit): Promise<T> {

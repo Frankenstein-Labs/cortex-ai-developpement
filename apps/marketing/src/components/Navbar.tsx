@@ -5,17 +5,11 @@ import { formatStars, getStars } from "@/lib/githubStars";
 import { GITHUB_REPO_URL } from "@/lib/seo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import MobileNav from "@/components/MobileNav";
-
-// This is intentionally a separate deployment from marketing.  Keeping the
-// value in a public environment variable lets previews point at their matching
-// Cloud app without ever putting credentials in the marketing bundle.
-const cloudAppUrl = (process.env.NEXT_PUBLIC_CORTEX_APP_URL ?? "https://app.trysynara.com").replace(
-  /\/$/u,
-  "",
-);
+import { resolveCloudAppUrl } from "@/lib/cloudAppUrl";
 
 export default async function Navbar() {
   const stars = await getStars();
+  const cloudAppUrl = resolveCloudAppUrl();
   return (
     <nav aria-label="Primary navigation" className="relative w-full px-4 py-4 sm:px-6">
       <div className="mx-auto flex h-9 max-w-6xl items-center justify-between gap-2 sm:gap-6">

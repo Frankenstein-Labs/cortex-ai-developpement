@@ -21,22 +21,37 @@ function CloudProjectPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+
     void (async () => {
       try {
         const [projectResult, workspaceResult] = await Promise.all([
-          cloudFetch<{ project: CloudProject }>(`/v1/projects/${projectId}`),
-          cloudFetch<{ workspaces: CloudWorkspace[] }>(`/v1/projects/${projectId}/workspaces`),
+          cloudFetch<{ project: CloudProject }>(`/v1/projects/${projectId}`, {
+            signal: controller.signal,
+          }),
+          cloudFetch<{ workspaces: CloudWorkspace[] }>(`/v1/projects/${projectId}/workspaces`, {
+            signal: controller.signal,
+          }),
         ]);
+        if (!active) return;
         setProject(projectResult.project);
         setWorkspaces(workspaceResult.workspaces);
       } catch (cause) {
+        if (!active || (cause instanceof DOMException && cause.name === "AbortError")) return;
         if (cause instanceof CloudRequestError && cause.status === 401) {
           await navigate({ to: "/login" });
           return;
         }
+        if (!active) return;
         setError(cause instanceof Error ? cause.message : "Project could not be loaded.");
       }
     })();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [navigate, projectId]);
 
   return (
