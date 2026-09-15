@@ -34,7 +34,7 @@ export const YOUTUBE_URL = "https://youtube.com/@emanueledpt";
  * Kept deliberately separate from `PRODUCT_HERO_TITLE`: the on-page H1 sells the
  * outcome, while this title has to win the SERP/share-card keyword match.
  */
-export const SITE_TITLE = `${SITE_NAME} — AI Coding Workspace for Claude Code, Codex & Cursor`;
+export const SITE_TITLE = "Synara — AI Coding Workspace for Claude Code, Codex & Cursor";
 
 /** Concise search/share description. The full definition lives in product.ts. */
 export const SITE_DESCRIPTION = PRODUCT_META_DESCRIPTION;
