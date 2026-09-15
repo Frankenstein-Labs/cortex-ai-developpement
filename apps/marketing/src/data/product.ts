@@ -9,7 +9,7 @@ export const PRODUCT_HERO_TITLE = "Run every coding agent in one workspace";
 export const PRODUCT_HERO_DESCRIPTION =
   "CORTEX Cloud is a developer-first workspace where projects, files, Git workflows, terminals, and agent-assisted development come together.";
 export const PRODUCT_META_DESCRIPTION =
-  "CORTEX Cloud is an AI-powered development workspace for projects, code, Git, terminals, files, parallel coding agents, and reviewable software delivery.";
+  "The local-first workspace and control plane for coding agents. CORTEX Cloud brings projects, code, Git, terminals, files, and reviewable delivery together.";
 export const PRODUCT_DESCRIPTION =
   "CORTEX Cloud brings projects, workspaces, files, Git, terminals, diffs, pull requests, and agent-assisted development into one developer-first environment. Existing local runtime capabilities remain available while the cloud control plane is being connected.";
 export const SUPPORTED_PROVIDERS = [
