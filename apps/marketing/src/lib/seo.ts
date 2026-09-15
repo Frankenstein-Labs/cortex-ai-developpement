@@ -17,7 +17,7 @@ import {
 import { releaseDateIso } from "@/lib/releaseDates";
 
 /** Canonical production origin; keep aligned with Vercel's primary domain. */
-export const SITE_URL = "https://www.cortex-cloud.dev";
+export const SITE_URL = "https://www.trysynara.com";
 
 export const SITE_NAME = PRODUCT_NAME;
 
