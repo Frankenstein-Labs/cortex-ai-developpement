@@ -35,7 +35,7 @@ const pillars = [
     Icon: LuShieldCheck,
     title: "Cloud access requires a separate CORTEX Cloud account",
     description:
-      "CORTEX Cloud requires its own account, separate from the provider accounts configured on your machine. Local workspace state remains on your machine, while remote access is an explicit, self-hosted capability.",
+      "No Synara account is required for the local desktop workspace. CORTEX Cloud requires its own account, separate from the provider accounts configured on your machine. Local workspace state remains on your machine, while remote access is an explicit, self-hosted capability.",
   },
   {
     Icon: LuEyeOff,

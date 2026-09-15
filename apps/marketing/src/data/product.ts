@@ -5,7 +5,7 @@
 export const PRODUCT_NAME = "CORTEX Cloud";
 export const PRODUCT_CATEGORY =
   "AI-powered development workspace for projects, agents, code, Git, and execution.";
-export const PRODUCT_HERO_TITLE = "Build software with CORTEX AI";
+export const PRODUCT_HERO_TITLE = "Run every coding agent in one workspace";
 export const PRODUCT_HERO_DESCRIPTION =
   "CORTEX Cloud is a developer-first workspace where projects, files, Git workflows, terminals, and agent-assisted development come together.";
 export const PRODUCT_META_DESCRIPTION =

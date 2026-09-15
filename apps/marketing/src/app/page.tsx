@@ -105,7 +105,7 @@ export default async function Home() {
                 className="inline-flex items-center gap-2 rounded-full border border-[var(--divide)] px-5 py-2.5 text-[13px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--mock-row)] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)]"
               >
                 <SiGithub className="size-4 shrink-0" aria-hidden="true" />
-                View on GitHub
+                Star on GitHub
               </a>
             </div>
             <p
