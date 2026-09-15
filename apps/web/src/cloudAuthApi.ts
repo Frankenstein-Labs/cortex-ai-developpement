@@ -21,10 +21,7 @@ export class CloudAuthRequestError extends Error {
 }
 
 function resolveCloudControlOrigin(): string {
-  return resolveCloudControlUrl(
-    import.meta.env.VITE_CLOUD_CONTROL_URL,
-    import.meta.env.PROD,
-  );
+  return resolveCloudControlUrl(import.meta.env.VITE_CLOUD_CONTROL_URL, import.meta.env.PROD);
 }
 
 function endpoint(path: string): string {

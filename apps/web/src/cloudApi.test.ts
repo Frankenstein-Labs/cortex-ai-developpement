@@ -10,9 +10,9 @@ afterEach(() => {
 describe("cloudFetch", () => {
   it("always sends credentialed JSON requests to the configured control plane", async () => {
     vi.stubEnv("VITE_CLOUD_CONTROL_URL", "https://control.example/");
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ organizations: [] }), { status: 200 }),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ organizations: [] }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
     await cloudFetch("/v1/organizations");
@@ -32,7 +32,7 @@ describe("cloudFetch", () => {
     );
   });
 
-  it.each([undefined, "", "   ", "/api/cloud", "mailto:ops@example.test"]) (
+  it.each([undefined, "", "   ", "/api/cloud", "mailto:ops@example.test"])(
     "rejects an absent or invalid Cloud Control URL: %j",
     (value) => {
       expect(() => resolveCloudControlUrl(value, false)).toThrow(CloudConfigurationError);

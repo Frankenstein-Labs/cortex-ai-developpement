@@ -70,8 +70,8 @@ describe("loadCloudControlConfig", () => {
     expect(() => loadCloudControlConfig({ ...base, CORTEX_COOKIE_SECURE: "false" })).toThrow(
       "CORTEX_COOKIE_SECURE must not be false in production.",
     );
-    expect(() => loadCloudControlConfig({ ...base, CORTEX_ALLOWED_ORIGINS: "https://app.example/path" })).toThrow(
-      "entries must be origins without a path.",
-    );
+    expect(() =>
+      loadCloudControlConfig({ ...base, CORTEX_ALLOWED_ORIGINS: "https://app.example/path" }),
+    ).toThrow("entries must be origins without a path.");
   });
 });

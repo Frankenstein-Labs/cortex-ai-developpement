@@ -29,13 +29,13 @@ After deployment, verify both endpoints. A successful `/healthz` proves process 
 
 Create a **second Vercel project** with Root Directory `apps/web`. The checked-in `apps/web/vercel.json` builds `dist` and rewrites all SPA deep links (including `/login`, `/signup`, `/cloud/projects/:id`, and `/cloud/workspaces/:id`) to `index.html`. Configure the Vercel project as follows:
 
-| Setting | Value |
-| --- | --- |
-| Root Directory | `apps/web` |
-| Install Command | `bun install --frozen-lockfile` |
-| Build Command | `bun run build` |
-| Output Directory | `dist` |
-| Public variable | `VITE_CLOUD_CONTROL_URL=https://api.<your-domain>` |
+| Setting          | Value                                              |
+| ---------------- | -------------------------------------------------- |
+| Root Directory   | `apps/web`                                         |
+| Install Command  | `bun install --frozen-lockfile`                    |
+| Build Command    | `bun run build`                                    |
+| Output Directory | `dist`                                             |
+| Public variable  | `VITE_CLOUD_CONTROL_URL=https://api.<your-domain>` |
 
 Set `NEXT_PUBLIC_CORTEX_APP_URL=https://app.<your-domain>` in the existing Vercel marketing project (Root Directory `apps/marketing`). `NEXT_PUBLIC_CORTEX_APP_URL` and `VITE_CLOUD_CONTROL_URL` are public browser configuration only. `CORTEX_DATABASE_URL` is server-only and must only be set on Cloud Control.
 

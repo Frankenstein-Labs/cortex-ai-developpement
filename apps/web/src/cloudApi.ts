@@ -61,10 +61,7 @@ export function resolveCloudControlUrl(value: string | undefined, production: bo
 }
 
 function cloudOrigin(): string {
-  return resolveCloudControlUrl(
-    import.meta.env.VITE_CLOUD_CONTROL_URL,
-    import.meta.env.PROD,
-  );
+  return resolveCloudControlUrl(import.meta.env.VITE_CLOUD_CONTROL_URL, import.meta.env.PROD);
 }
 
 export async function cloudFetch<T>(path: string, init?: RequestInit): Promise<T> {
