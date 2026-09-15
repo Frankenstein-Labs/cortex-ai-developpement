@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CloudRouteImport } from './routes/cloud'
+import { Route as CloudProjectsProjectIdRouteImport } from './routes/cloud.projects.$projectId'
+import { Route as CloudWorkspacesWorkspaceIdRouteImport } from './routes/cloud.workspaces.$workspaceId'
 import { Route as ChatRouteImport } from './routes/_chat'
 import { Route as ChatIndexRouteImport } from './routes/_chat.index'
 import { Route as ChatSettingsRouteImport } from './routes/_chat.settings'
@@ -39,6 +41,16 @@ const LoginRoute = LoginRouteImport.update({
 const CloudRoute = CloudRouteImport.update({
   id: '/cloud',
   path: '/cloud',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CloudProjectsProjectIdRoute = CloudProjectsProjectIdRouteImport.update({
+  id: '/cloud/projects/$projectId',
+  path: '/cloud/projects/$projectId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CloudWorkspacesWorkspaceIdRoute = CloudWorkspacesWorkspaceIdRouteImport.update({
+  id: '/cloud/workspaces/$workspaceId',
+  path: '/cloud/workspaces/$workspaceId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -110,6 +122,8 @@ const ChatAutomationsAutomationIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof ChatIndexRoute
   '/cloud': typeof CloudRoute
+  '/cloud/projects/$projectId': typeof CloudProjectsProjectIdRoute
+  '/cloud/workspaces/$workspaceId': typeof CloudWorkspacesWorkspaceIdRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/$threadId': typeof ChatThreadIdRoute
@@ -126,6 +140,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/cloud': typeof CloudRoute
+  '/cloud/projects/$projectId': typeof CloudProjectsProjectIdRoute
+  '/cloud/workspaces/$workspaceId': typeof CloudWorkspacesWorkspaceIdRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/$threadId': typeof ChatThreadIdRoute
@@ -143,6 +159,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_chat': typeof ChatRouteWithChildren
   '/cloud': typeof CloudRoute
+  '/cloud/projects/$projectId': typeof CloudProjectsProjectIdRoute
+  '/cloud/workspaces/$workspaceId': typeof CloudWorkspacesWorkspaceIdRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_chat/$threadId': typeof ChatThreadIdRoute
@@ -163,6 +181,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cloud'
+    | '/cloud/projects/$projectId'
+    | '/cloud/workspaces/$workspaceId'
     | '/login'
     | '/signup'
     | '/$threadId'
@@ -179,6 +199,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/cloud'
+    | '/cloud/projects/$projectId'
+    | '/cloud/workspaces/$workspaceId'
     | '/login'
     | '/signup'
     | '/$threadId'
@@ -195,6 +217,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_chat'
     | '/cloud'
+    | '/cloud/projects/$projectId'
+    | '/cloud/workspaces/$workspaceId'
     | '/login'
     | '/signup'
     | '/_chat/$threadId'
@@ -214,6 +238,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   ChatRoute: typeof ChatRouteWithChildren
   CloudRoute: typeof CloudRoute
+  CloudProjectsProjectIdRoute: typeof CloudProjectsProjectIdRoute
+  CloudWorkspacesWorkspaceIdRoute: typeof CloudWorkspacesWorkspaceIdRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
 }
@@ -239,6 +265,20 @@ declare module '@tanstack/react-router' {
       path: '/cloud'
       fullPath: '/cloud'
       preLoaderRoute: typeof CloudRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cloud/projects/$projectId': {
+      id: '/cloud/projects/$projectId'
+      path: '/cloud/projects/$projectId'
+      fullPath: '/cloud/projects/$projectId'
+      preLoaderRoute: typeof CloudProjectsProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cloud/workspaces/$workspaceId': {
+      id: '/cloud/workspaces/$workspaceId'
+      path: '/cloud/workspaces/$workspaceId'
+      fullPath: '/cloud/workspaces/$workspaceId'
+      preLoaderRoute: typeof CloudWorkspacesWorkspaceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_chat': {
@@ -389,6 +429,8 @@ const ChatRouteWithChildren = ChatRoute._addFileChildren(ChatRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   ChatRoute: ChatRouteWithChildren,
   CloudRoute: CloudRoute,
+  CloudProjectsProjectIdRoute: CloudProjectsProjectIdRoute,
+  CloudWorkspacesWorkspaceIdRoute: CloudWorkspacesWorkspaceIdRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
 }

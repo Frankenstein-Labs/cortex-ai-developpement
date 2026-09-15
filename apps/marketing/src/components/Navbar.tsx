@@ -6,6 +6,14 @@ import { GITHUB_REPO_URL } from "@/lib/seo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import MobileNav from "@/components/MobileNav";
 
+// This is intentionally a separate deployment from marketing.  Keeping the
+// value in a public environment variable lets previews point at their matching
+// Cloud app without ever putting credentials in the marketing bundle.
+const cloudAppUrl = (process.env.NEXT_PUBLIC_CORTEX_APP_URL ?? "https://app.trysynara.com").replace(
+  /\/$/u,
+  "",
+);
+
 export default async function Navbar() {
   const stars = await getStars();
   return (
@@ -80,10 +88,16 @@ export default async function Navbar() {
             </a>
           ) : null}
           <Link
-            href="/install"
+            href={`${cloudAppUrl}/login`}
             className="rounded-full border border-[var(--divide)] px-3 py-1 text-[12.5px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--mock-row)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)] sm:px-3.5 sm:text-[13px]"
           >
-            Download
+            Sign in
+          </Link>
+          <Link
+            href={`${cloudAppUrl}/signup`}
+            className="rounded-full bg-[var(--text-primary)] px-3 py-1 text-[12.5px] font-medium text-[var(--background)] transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)] sm:px-3.5 sm:text-[13px]"
+          >
+            Get started
           </Link>
         </div>
         <MobileNav />

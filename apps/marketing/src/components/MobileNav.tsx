@@ -10,6 +10,10 @@ const links = [
   { href: "/docs", label: "Docs" },
   { href: "/changelog", label: "Changelog" },
 ] as const;
+const cloudAppUrl = (process.env.NEXT_PUBLIC_CORTEX_APP_URL ?? "https://app.trysynara.com").replace(
+  /\/$/u,
+  "",
+);
 
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -30,10 +34,10 @@ export default function MobileNav() {
     <div className="relative flex items-center gap-1.5 sm:hidden">
       <ThemeToggle />
       <Link
-        href="/install"
+        href={`${cloudAppUrl}/login`}
         className="rounded-full border border-[var(--divide)] px-3 py-1.5 text-[12px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--mock-row)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)]"
       >
-        Download
+        Sign in
       </Link>
       <button
         type="button"
@@ -104,6 +108,13 @@ export default function MobileNav() {
               {label}
             </Link>
           ))}
+          <Link
+            href={`${cloudAppUrl}/signup`}
+            onClick={() => setOpen(false)}
+            className="rounded-xl px-3 py-2.5 text-[13px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--mock-row)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--accent-link)]"
+          >
+            Create account
+          </Link>
         </nav>
       </div>
     </div>
