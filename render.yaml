@@ -13,3 +13,11 @@ services:
         value: production
       - key: CORTEX_DATABASE_URL
         sync: false
+      - key: SUPABASE_URL
+        value: https://ownnbyhsflmdjytwaeqv.supabase.co
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: CORTEX_COOKIE_SECURE
+      - key: CORTEX_ALLOWED_ORIGINS
+        sync: false
+        value: https://cortex-ai-developpement-market-git-db6a4c-18s-projects-030c6a8a.vercel.app

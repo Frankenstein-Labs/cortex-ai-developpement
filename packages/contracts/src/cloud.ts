@@ -109,6 +109,7 @@ export const CloudAuthSession = Schema.Struct({
     emailVerified: Schema.Boolean,
   }),
   organizationId: Schema.optional(OrganizationId),
+  sessionCreated: Schema.Boolean,
 });
 export type CloudAuthSession = typeof CloudAuthSession.Type;
 

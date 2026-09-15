@@ -32,10 +32,13 @@ async function readError(response: Response): Promise<string> {
   if (
     typeof body === "object" &&
     body !== null &&
-    "message" in body &&
-    typeof body.message === "string"
+    "error" in body &&
+    typeof body.error === "object" &&
+    body.error !== null &&
+    "message" in body.error &&
+    typeof body.error.message === "string"
   ) {
-    return body.message;
+    return body.error.message;
   }
   return "Cloud sign-in could not be completed. Please try again.";
 }

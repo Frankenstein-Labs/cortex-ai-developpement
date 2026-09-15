@@ -129,9 +129,11 @@ describe("Cloud authentication contracts", () => {
     expect(
       Schema.decodeUnknownSync(CloudAuthSession)({
         user: { id: "user-1", email: "ada@example.com", emailVerified: false },
+        sessionCreated: true,
       }),
     ).toEqual({
       user: { id: "user-1", email: "ada@example.com", emailVerified: false },
+      sessionCreated: true,
     });
   });
 });

@@ -10,7 +10,7 @@ export default function SiteFooter() {
     <footer className="mt-auto border-t border-[var(--divide)] py-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 text-[12px] text-[var(--text-tertiary)] sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-6">
         <span>
-          Made by{" "}
+          CORTEX Cloud{" "}
           <a
             href="https://x.com/emanueledpt"
             target="_blank"

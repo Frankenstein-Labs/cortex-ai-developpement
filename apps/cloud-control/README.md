@@ -7,13 +7,19 @@ replacement for the local-first `apps/server` runtime.
 
 - `GET /healthz` returns process liveness.
 - `GET /readyz` verifies PostgreSQL connectivity.
-- `/v1/*` fails closed with `503 cloud_auth_not_configured` until cloud identity and
-  transaction-scoped tenant context are implemented.
+- `POST /api/cloud/auth/signup` and `POST /api/cloud/auth/login` use Supabase Auth,
+  then idempotently provision the CORTEX user, personal organization, and owner membership.
+- `GET /api/cloud/auth/session` reads the opaque `CORTEX` HttpOnly cookie, hashes it with
+  SHA-256, verifies it through `verifyCortexSession`, and resolves the identity with
+  `app_resolve_web_session`; it never treats the cookie as a Supabase access token and
+  never calls Supabase's `/auth/v1/user` endpoint.
+- `POST /api/cloud/auth/logout` clears the application cookie.
+- `/v1/organizations` and `/v1/projects` require a verified identity and execute inside a
+  transaction-scoped `synara.user_id` / `synara.organization_id` context.
+- The canonical Supabase project is `ownnbyhsflmdjytwaeqv`; its URL and publishable key are
+  supplied through deployment environment variables and are never committed.
 - `migrations/0004_api_tokens.sql` adds storage for hashed CORTEX API-token metadata;
-  it does not expose token-management endpoints yet.
-
-This deliberate state prevents an unauthenticated caller from creating, listing, or
-validating API tokens before the P0 cloud-authentication boundary exists.
+  token-management endpoints remain a separate authenticated capability.
 
 ## Local startup
 
@@ -24,12 +30,32 @@ CORTEX_DATABASE_URL=postgresql://app:password@127.0.0.1:5432/cortex \
 
 Configuration is fail-fast:
 
-| Variable              | Required | Meaning                                                                          |
-| --------------------- | -------- | -------------------------------------------------------------------------------- |
-| `CORTEX_DATABASE_URL` | yes      | PostgreSQL application-role URL. Never use the migration owner for HTTP traffic. |
-| `PORT`                | no       | Listener port; defaults to `8787`.                                               |
-| `HOST`                | no       | Listener host; defaults to `0.0.0.0`.                                            |
-| `CORTEX_ENVIRONMENT`  | no       | `development`, `staging`, or `production`; defaults to `development`.            |
+| Variable                     | Required   | Meaning                                                                                                  |
+| ---------------------------- | ---------- | -------------------------------------------------------------------------------------------------------- |
+| `CORTEX_DATABASE_URL`        | yes        | PostgreSQL application-role URL. Never use the migration owner for HTTP traffic.                         |
+| `SUPABASE_URL`               | yes        | Canonical Supabase project URL.                                                                          |
+| `SUPABASE_PUBLISHABLE_KEY`   | yes        | Supabase publishable key; never use a secret/service-role key here.                                      |
+| `PORT`                       | no         | Listener port; defaults to `8787`.                                                                       |
+| `HOST`                       | no         | Listener host; defaults to `0.0.0.0`.                                                                    |
+| `CORTEX_ENVIRONMENT`         | no         | `development`, `staging`, or `production`; defaults to `development`.                                    |
+| `CORTEX_SESSION_COOKIE`      | no         | HttpOnly cookie name; defaults to `cortex_cloud_session`.                                                |
+| `CORTEX_SESSION_TTL_SECONDS` | no         | Cookie lifetime; defaults to seven days.                                                                 |
+| `CORTEX_COOKIE_SECURE`       | no         | Defaults to secure cookies unless explicitly `false`.                                                    |
+| `CORTEX_COOKIE_SAMESITE`     | no         | `lax` by default; use `none` with secure cookies for cross-site browser deployments.                     |
+| `CORTEX_ALLOWED_ORIGINS`     | production | Comma-separated HTTPS browser origins allowed to send credentialed requests. Wildcards are not accepted. |
+
+## Browser and OAuth deployment requirements
+
+The control plane sends `Access-Control-Allow-Origin` only for an exact origin listed in
+`CORTEX_ALLOWED_ORIGINS`, together with `Access-Control-Allow-Credentials: true`. The web
+deployment must set `VITE_CLOUD_CONTROL_URL` to the public HTTPS control-plane URL; it must
+not use local storage as an authentication fallback.
+
+GitHub and Google OAuth are intentionally not simulated. Supabase Auth must have each provider
+enabled, with its provider credentials and callback configuration set in the Supabase project.
+The provider redirect should return to the control-plane OAuth callback, which must then create
+the same opaque CORTEX session as password login. Live OAuth remains blocked until those
+provider credentials are available.
 
 ## Token-security contract
 

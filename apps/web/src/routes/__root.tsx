@@ -271,7 +271,7 @@ function RootRouteView() {
     </>
   );
 
-  if (compatibilityIssue) {
+  if (compatibilityIssue && pathname !== "/cloud") {
     return (
       <>
         <TransportCompatibilityView issue={compatibilityIssue} />
@@ -283,7 +283,7 @@ function RootRouteView() {
   // Cloud identity is a browser session owned by the cloud control plane, not a
   // desktop pairing session. These routes must stay reachable when the local
   // WebSocket server is absent, and must never mount local event hydration.
-  if (pathname === "/login" || pathname === "/signup") {
+  if (pathname === "/login" || pathname === "/signup" || pathname === "/cloud") {
     return <Outlet />;
   }
 
