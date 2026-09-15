@@ -435,7 +435,7 @@ const server = Bun.serve({
     let identity: AuthenticatedIdentity | undefined;
     try {
       if (request.method === "OPTIONS") {
-        status = 204;
+        status = 200;
         return response(request, null, status, id, {
           "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
           "access-control-allow-headers": "content-type,x-request-id",
