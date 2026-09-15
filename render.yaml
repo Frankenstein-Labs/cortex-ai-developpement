@@ -13,3 +13,9 @@ services:
         value: production
       - key: CORTEX_DATABASE_URL
         sync: false
+      - key: SUPABASE_URL
+        value: https://ownnbyhsflmdjytwaeqv.supabase.co
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: CORTEX_COOKIE_SECURE
+        value: "true"

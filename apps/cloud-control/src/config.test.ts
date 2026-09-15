@@ -14,6 +14,8 @@ describe("loadCloudControlConfig", () => {
     expect(
       loadCloudControlConfig({
         CORTEX_DATABASE_URL: "postgresql://app:secret@db.example/cortex",
+        SUPABASE_URL: "https://ownnbyhsflmdjytwaeqv.supabase.co",
+        SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
         PORT: "9443",
         CORTEX_ENVIRONMENT: "staging",
       }),
