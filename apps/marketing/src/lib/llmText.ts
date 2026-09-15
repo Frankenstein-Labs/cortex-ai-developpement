@@ -60,6 +60,7 @@ export function buildLlmsTxt() {
     ...documentationIndexLines(),
     "",
     "## Product model",
+    "One task owns one line of work",
     ...PRODUCT_PILLARS.map(({ title, description }) => `- **${title}:** ${description}`),
     "",
     "## Supported coding-agent runtimes",
