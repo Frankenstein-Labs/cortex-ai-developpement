@@ -96,9 +96,9 @@ function CloudProjectPage() {
               )}
             </section>
           </>
-        ) : (
+        ) : error === null ? (
           <p className="mt-8 text-sm text-muted-foreground">Loading project…</p>
-        )}
+        ) : null}
       </div>
     </main>
   );
