@@ -9,6 +9,7 @@ import { scrollToAnchor } from "@/lib/scrollToAnchor";
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
+  { id: "cloud", label: "Platform" },
   { id: "providers", label: "Providers" },
   { id: "workflow", label: "Workflow" },
   { id: "privacy", label: "Privacy" },

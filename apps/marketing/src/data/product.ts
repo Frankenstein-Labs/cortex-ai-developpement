@@ -2,16 +2,16 @@
 // Purpose: Canonical public product language shared by marketing, metadata,
 //          structured data, FAQs, and AI-readable discovery surfaces.
 // Layer: static content (server/client importable).
-export const PRODUCT_NAME = "CORTEX Cloud";
+export const PRODUCT_NAME = "CORTEX";
 export const PRODUCT_CATEGORY =
-  "AI-powered development workspace for projects, agents, code, Git, and execution.";
-export const PRODUCT_HERO_TITLE = "Run every coding agent in one workspace";
+  "A developer workspace for projects, agents, code, Git, and execution.";
+export const PRODUCT_HERO_TITLE = "Direct the work. Keep the evidence.";
 export const PRODUCT_HERO_DESCRIPTION =
-  "CORTEX Cloud is a developer-first workspace where projects, files, Git workflows, terminals, and agent-assisted development come together.";
+  "CORTEX brings coding-agent work, project context, files, review, and delivery into one developer-first surface—on the web and in the local runtime where execution is already proven.";
 export const PRODUCT_META_DESCRIPTION =
   "The local-first workspace and control plane for coding agents. CORTEX Cloud brings projects, code, Git, terminals, files, and reviewable delivery together.";
 export const PRODUCT_DESCRIPTION =
-  "CORTEX Cloud brings projects, workspaces, files, Git, terminals, diffs, pull requests, and agent-assisted development into one developer-first environment. Existing local runtime capabilities remain available while the cloud control plane is being connected.";
+  "CORTEX brings projects, workspaces, files, Git, terminals, diffs, pull requests, and agent-assisted development into one developer-first environment. The cloud control plane provides authenticated projects and files while the isolated execution plane is still being built.";
 export const SUPPORTED_PROVIDERS = [
   "CORTEX AI",
   "Claude Code",

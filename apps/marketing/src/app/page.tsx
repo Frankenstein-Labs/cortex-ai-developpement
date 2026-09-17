@@ -3,6 +3,7 @@
 // Layer: App Router page (server component)
 
 import { SiGithub, SiOpenai } from "react-icons/si";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import DownloadButton from "@/components/DownloadButton";
 import InstallerCount from "@/components/InstallerCount";
@@ -15,6 +16,7 @@ import ClosingCTA from "@/components/ClosingCTA";
 import SiteFooter from "@/components/SiteFooter";
 import PrivacySection from "@/components/PrivacySection";
 import HomepageRail from "@/components/HomepageRail";
+import { CloudFoundation } from "@/components/CloudFoundation";
 import {
   AntigravityIcon,
   ClaudeIcon,
@@ -28,11 +30,13 @@ import {
 import { getInstallerCount } from "@/lib/installerCount";
 import { PRODUCT_HERO_DESCRIPTION, PRODUCT_HERO_TITLE } from "@/data/product";
 import { FAQ_JSONLD, GITHUB_REPO_URL, jsonLdScript } from "@/lib/seo";
+import { resolveCloudAppUrl } from "@/lib/cloudAppUrl";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const installerCount = await getInstallerCount();
+  const cloudAppUrl = resolveCloudAppUrl();
 
   return (
     <div className="min-h-screen overflow-x-clip bg-[var(--page-bg)] text-[var(--text-primary)]">
@@ -97,7 +101,13 @@ export default async function Home() {
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-3" data-home-actions>
-              <DownloadButton />
+              <Link
+                href={`${cloudAppUrl}/signup`}
+                className="inline-flex min-w-[10.5rem] items-center justify-center rounded-full bg-[var(--btn-primary-bg)] px-5 py-2.5 text-[13px] font-medium text-[var(--btn-primary-fg)] transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)]"
+              >
+                Open CORTEX Cloud
+              </Link>
+              <DownloadButton className="border border-[var(--divide)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--mock-row)]" />
               <a
                 href={GITHUB_REPO_URL}
                 target="_blank"
@@ -133,6 +143,8 @@ export default async function Home() {
             </div>
           </div>
         </section>
+
+        <CloudFoundation />
 
         <div id="providers" className="scroll-mt-20">
           <Features />
