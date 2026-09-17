@@ -54,6 +54,12 @@ export default async function Navbar() {
             Docs
           </Link>
           <Link
+            href="/#cloud"
+            className="shrink-0 transition-colors hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)]"
+          >
+            Platform
+          </Link>
+          <Link
             href="/changelog"
             className="shrink-0 transition-colors hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-link)]"
           >
