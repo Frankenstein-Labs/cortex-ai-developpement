@@ -2,7 +2,9 @@
 // credentials. Keep this normalization shared by desktop and mobile navigation
 // so a malformed deployment value cannot produce inconsistent destinations.
 
-const DEFAULT_CLOUD_APP_URL = "https://app.trysynara.com";
+// Keep auth navigation on the public product origin. Next rewrites proxy these
+// paths to the existing cloud frontend, so users never leave the platform.
+const DEFAULT_CLOUD_APP_URL = "https://www.trysynara.com";
 
 export function resolveCloudAppUrl(value = process.env.NEXT_PUBLIC_CORTEX_APP_URL): string {
   const normalized = value?.trim() || DEFAULT_CLOUD_APP_URL;
