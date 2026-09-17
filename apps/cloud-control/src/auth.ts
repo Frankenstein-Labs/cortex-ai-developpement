@@ -196,6 +196,41 @@ export async function supabaseSignup(
   return result;
 }
 
+export function createOAuthVerifier(): { verifier: string; challenge: string } {
+  const verifier = randomBytes(48).toString("base64url");
+  const challenge = createHash("sha256").update(verifier).digest("base64url");
+  return { verifier, challenge };
+}
+
+export async function supabaseOAuthExchange(
+  supabaseUrl: string,
+  publishableKey: string,
+  code: string,
+  verifier: string,
+): Promise<{ user: { id: string; email: string; emailVerified: boolean } }> {
+  const response = await supabaseAuthRequest(`${supabaseUrl}/auth/v1/token?grant_type=pkce`, {
+    method: "POST",
+    headers: { apikey: publishableKey, "content-type": "application/json" },
+    body: JSON.stringify({ auth_code: code, code_verifier: verifier }),
+  });
+  const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+  const rawUser = body?.user;
+  if (!response.ok || !rawUser || typeof rawUser !== "object") {
+    throw new CloudAuthError(401, "oauth_exchange_failed", "OAuth sign-in could not be completed.");
+  }
+  const user = rawUser as { id?: string; email?: string; email_confirmed_at?: string | null };
+  if (!user.id || !user.email) {
+    throw new CloudAuthError(401, "oauth_exchange_failed", "OAuth account is missing an email.");
+  }
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      emailVerified: Boolean(user.email_confirmed_at),
+    },
+  };
+}
+
 export async function revokeCortexSession(sql: SQL, token: string): Promise<void> {
   await sql`SELECT app_revoke_web_session(${digestSession(token)})`;
 }

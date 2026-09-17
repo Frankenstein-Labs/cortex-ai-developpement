@@ -15,6 +15,8 @@ import {
   expiredSessionCookie,
   supabasePasswordAuth,
   supabaseSignup,
+  supabaseOAuthExchange,
+  createOAuthVerifier,
   verifyCortexSession,
   withTenantTransaction,
   type AuthenticatedIdentity,
@@ -166,12 +168,100 @@ async function routeAuth(request: Request, pathname: string, id: string): Promis
     });
   }
 
-  if (request.method === "GET" && pathname.startsWith("/api/cloud/auth/oauth/")) {
-    throw new CloudAuthError(
-      501,
-      "oauth_not_configured",
-      "OAuth provider configuration is required.",
+  const oauthStart = pathname.match(/^\/api\/cloud\/auth\/oauth\/(google|github)\/start$/u);
+  if (request.method === "GET" && oauthStart) {
+    const provider = oauthStart[1] ?? "google";
+    const url = new URL(request.url);
+    const requestedRedirect = url.searchParams.get("redirect");
+    const redirectOrigin =
+      requestedRedirect && config.allowedOrigins.includes(requestedRedirect)
+        ? requestedRedirect
+        : config.allowedOrigins[0];
+    if (!redirectOrigin) {
+      throw new CloudAuthError(
+        503,
+        "oauth_not_configured",
+        "OAuth redirect origin is not configured.",
+      );
+    }
+    const { verifier, challenge } = createOAuthVerifier();
+    const state = crypto.randomUUID();
+    const callback = new URL(`/api/cloud/auth/oauth/${provider}/callback`, url.origin);
+    callback.searchParams.set("redirect", redirectOrigin);
+    const authorize = new URL(`${config.supabaseUrl}/auth/v1/authorize`);
+    authorize.searchParams.set("provider", provider);
+    authorize.searchParams.set("redirect_to", callback.toString());
+    authorize.searchParams.set("code_challenge", challenge);
+    authorize.searchParams.set("code_challenge_method", "s256");
+    authorize.searchParams.set("state", state);
+    const headers = new Headers({ location: authorize.toString() });
+    headers.append(
+      "set-cookie",
+      sessionCookie("cortex_oauth_state", state, 600, config.cookieSecure),
     );
+    headers.append(
+      "set-cookie",
+      sessionCookie("cortex_oauth_verifier", verifier, 600, config.cookieSecure),
+    );
+    return new Response(null, { status: 302, headers });
+  }
+
+  const oauthCallback = pathname.match(/^\/api\/cloud\/auth\/oauth\/(google|github)\/callback$/u);
+  if (request.method === "GET" && oauthCallback) {
+    const provider = oauthCallback[1] ?? "google";
+    const url = new URL(request.url);
+    const state = url.searchParams.get("state");
+    const code = url.searchParams.get("code");
+    const expectedState = readSessionToken(request, "cortex_oauth_state");
+    const verifier = readSessionToken(request, "cortex_oauth_verifier");
+    const redirectOrigin = url.searchParams.get("redirect");
+    if (!redirectOrigin || !config.allowedOrigins.includes(redirectOrigin)) {
+      throw new CloudAuthError(
+        400,
+        "invalid_oauth_redirect",
+        "OAuth redirect origin is not allowed.",
+      );
+    }
+    if (!state || !expectedState || state !== expectedState || !code || !verifier) {
+      throw new CloudAuthError(
+        400,
+        "invalid_oauth_state",
+        "OAuth sign-in state is invalid or expired.",
+      );
+    }
+    const result = await supabaseOAuthExchange(
+      config.supabaseUrl,
+      config.supabasePublishableKey,
+      code,
+      verifier,
+    );
+    const identity: AuthenticatedIdentity = {
+      userId: result.user.id,
+      email: result.user.email,
+      emailVerified: result.user.emailVerified,
+      sessionId: crypto.randomUUID(),
+    };
+    const { organizationId } = await ensureCortexUser(sql, identity);
+    const session = await createCortexSession(sql, identity, config.sessionTtlSeconds);
+    const destination = new URL("/cloud", redirectOrigin);
+    destination.searchParams.set("oauth", provider);
+    const headers = new Headers({ location: destination.toString() });
+    headers.append(
+      "set-cookie",
+      sessionCookie(
+        config.sessionCookieName,
+        session.token,
+        config.sessionTtlSeconds,
+        config.cookieSecure,
+        config.cookieSameSite,
+      ),
+    );
+    headers.append("set-cookie", expiredSessionCookie("cortex_oauth_state", config.cookieSecure));
+    headers.append(
+      "set-cookie",
+      expiredSessionCookie("cortex_oauth_verifier", config.cookieSecure),
+    );
+    return new Response(null, { status: 302, headers });
   }
   return response(request, { error: { code: "not_found", message: "Not found." } }, 404, id);
 }
