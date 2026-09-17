@@ -5,6 +5,7 @@
 import { CloudAuthSession, type CloudIdentityProvider } from "@synara/contracts";
 import { Schema } from "effect";
 
+import { resolveCloudControlUrl } from "./cloudApi";
 import type { CloudAuthMode, CloudAuthValues } from "./cloudAuthForm";
 
 export interface CloudAuthGateway {
@@ -20,7 +21,7 @@ export class CloudAuthRequestError extends Error {
 }
 
 function resolveCloudControlOrigin(): string {
-  return import.meta.env.VITE_CLOUD_CONTROL_URL?.replace(/\/$/u, "") ?? "";
+  return resolveCloudControlUrl(import.meta.env.VITE_CLOUD_CONTROL_URL, import.meta.env.PROD);
 }
 
 function endpoint(path: string): string {
