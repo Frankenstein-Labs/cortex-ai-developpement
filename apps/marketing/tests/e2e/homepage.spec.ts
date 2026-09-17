@@ -8,7 +8,7 @@ test.describe("homepage functional flow", () => {
     await page.setViewportSize({ width: 1440, height: 1100 });
     await preparePage(page, "light");
 
-    await expect(page.locator("h1")).toHaveText("Run every coding agent in one workspace");
+    await expect(page.locator("h1")).toHaveText("Direct the work. Keep the evidence.");
     await expect(page.getByText("09 supported", { exact: true })).toHaveCount(0);
 
     const actions = page.locator("[data-home-actions]");
@@ -16,9 +16,11 @@ test.describe("homepage functional flow", () => {
       name: /Download for|Download Synara/,
     });
     const github = actions.getByRole("link", { name: "Star on GitHub" });
+    const cloud = actions.getByRole("link", { name: "Open CORTEX Cloud" });
 
     await expect(download).toHaveAttribute("href", "/install");
     await expect(github).toHaveAttribute("href", /github\.com/);
+    await expect(cloud).toHaveAttribute("href", /\/signup$/);
 
     const [downloadBox, githubBox] = await Promise.all([
       download.boundingBox(),

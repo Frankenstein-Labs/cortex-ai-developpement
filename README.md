@@ -1,18 +1,18 @@
 <div align="center">
   <img src="./assets/prod/logo.svg" width="112" alt="CORTEX logo">
   <h1>CORTEX</h1>
-  <p><strong>A focused workspace for coding agents.</strong><br>
-  Projects, provider sessions, execution surfaces, and review tools in one local-first desktop application.</p>
+  <p><strong>AI development workspaces, built around CORTEX.</strong><br>
+  Projects, agent sessions, execution surfaces, review tools, and an emerging cloud control plane in one product.</p>
   <p>
-    <a href="https://github.com/Emanuele-web04/synara/releases/latest">Download</a>
+    <a href="https://github.com/Frankenstein-Labs/cortex-ai-developpement/releases">Download</a>
     &nbsp;·&nbsp;
-    <a href="https://www.trysynara.com/">Website</a>
+    <a href="./apps/marketing/README.md">Website source</a>
     &nbsp;·&nbsp;
-    <a href="https://www.trysynara.com/docs">Documentation</a>
+    <a href="./docs/README.md">Documentation</a>
     &nbsp;·&nbsp;
     <a href="./docs/external-mcp.md">MCP integration</a>
     &nbsp;·&nbsp;
-    <a href="https://github.com/Emanuele-web04/synara/issues/new/choose">Report an issue</a>
+    <a href="https://github.com/Frankenstein-Labs/cortex-ai-developpement/issues/new/choose">Report an issue</a>
   </p>
 </div>
 
@@ -27,7 +27,7 @@
 | **Workspace tools**  | Changes, terminal, browser, files, editor, previews, and Git. |
 
 > [!NOTE]
-> Synara is early-stage software. APIs and interface details remain under active development.
+> CORTEX is early-stage software. APIs and interface details remain under active development.
 
 ## Capabilities
 
@@ -57,12 +57,12 @@ The tools surrounding an agent session remain available from the same task surfa
 Keep an active conversation alongside the surface it is changing. Split views, browser previews, and device previews make the result part of the working context.
 
 <p align="center">
-  <img src="./assets/prod/readme-split-view-dark.png" width="900" alt="Synara split view with an agent thread and iOS simulator preview">
+  <img src="./assets/prod/readme-split-view-dark.png" width="900" alt="CORTEX split view with an agent thread and iOS simulator preview">
 </p>
 
 ### 4. Provider-native integrations
 
-Synara connects to coding-agent runtimes that are installed and authenticated locally. The current development build includes the following integrations:
+CORTEX connects to coding-agent runtimes that are installed and authenticated locally. The current development build includes the following integrations:
 
 | Runtime         | Local integration                           |
 | --------------- | ------------------------------------------- |
@@ -91,12 +91,23 @@ Automations support recurring agent runs and keep their outcomes attached to pro
 
 See [External MCP integrations](./docs/external-mcp.md) for setup, pairing, project access, and permission boundaries.
 
-### 7. Appearance and workspace preferences
+### 7. CORTEX Cloud foundation
+
+The web application includes authenticated CORTEX Cloud routes backed by the separately
+deployable `apps/cloud-control` service. The control plane uses opaque HttpOnly sessions,
+organization-scoped PostgreSQL transactions, forced row-level security, projects, workspace
+metadata, and versioned cloud-file persistence. It intentionally does **not** simulate a hosted
+agent, terminal, Git, or runtime while an execution plane is unavailable.
+
+See [`apps/cloud-control/README.md`](./apps/cloud-control/README.md) for configuration and
+deployment requirements, and the [CORTEX platform implementation report](./CORTEX_PLATFORM_IMPLEMENTATION_REPORT.md) for the current capability boundary.
+
+### 8. Appearance and workspace preferences
 
 Configure the shell to match the way you work with light and dark themes, typography controls, density preferences, and workspace settings.
 
 <p align="center">
-  <img src="./assets/prod/readme-appearance-dark.png" width="900" alt="Synara Appearance settings with theme, typography, and density controls">
+  <img src="./assets/prod/readme-appearance-dark.png" width="900" alt="CORTEX appearance settings with theme, typography, and density controls">
 </p>
 
 ### Additional capabilities
@@ -113,21 +124,21 @@ Configure the shell to match the way you work with light and dark themes, typogr
 
 ### Desktop application
 
-Download the latest build from [GitHub Releases](https://github.com/Emanuele-web04/synara/releases) or visit [trysynara.com](https://www.trysynara.com/).
+Download the latest build from [CORTEX GitHub Releases](https://github.com/Frankenstein-Labs/cortex-ai-developpement/releases). The public website source lives in [`apps/marketing`](./apps/marketing/README.md).
 
 Current native release targets are Windows x64, macOS Intel, macOS Apple Silicon, and Linux x64.
 
 ### Provider setup
 
-Synara uses the provider installations and subscriptions already configured on the local machine. Install and authenticate the runtime you intend to use before starting a session. For Codex sessions, follow the [Codex CLI setup](https://github.com/openai/codex).
+CORTEX uses the provider installations and subscriptions already configured on the local machine. Install and authenticate the runtime you intend to use before starting a session. For Codex sessions, follow the [Codex CLI setup](https://github.com/openai/codex).
 
 ### Run from source
 
 The development checkout uses [Bun 1.4.2](https://bun.sh/) and [Node.js 24.13.1](https://nodejs.org/).
 
 ```console
-git clone https://github.com/Emanuele-web04/synara.git
-cd synara
+git clone https://github.com/Frankenstein-Labs/cortex-ai-developpement.git
+cd cortex-ai-developpement
 bun install
 bun run dev
 ```
@@ -150,8 +161,8 @@ the root `typecheck` command also ensures that patch is applied before checking.
 
 Bug fixes, reliability improvements, performance work, documentation, and maintenance changes are welcome.
 
-Read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request. For a reproducible problem, [open an issue](https://github.com/Emanuele-web04/synara/issues/new/choose) with the Synara version, operating system, runtime, and relevant logs.
+Read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request. For a reproducible problem, [open an issue](https://github.com/Frankenstein-Labs/cortex-ai-developpement/issues/new/choose) with the CORTEX version, operating system, runtime, and relevant logs.
 
 ## License
 
-Synara is licensed under the [MIT License](./LICENSE).
+CORTEX is licensed under the [MIT License](./LICENSE).
