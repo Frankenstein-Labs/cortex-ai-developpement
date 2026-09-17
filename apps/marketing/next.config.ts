@@ -17,6 +17,11 @@ const CANONICAL_HOST = "www.trysynara.com";
 // redirect must keep matching it exactly.
 const VERCEL_ALIAS_HOST = ["dp", "code", "-website.vercel.app"].join("");
 
+// Present the marketing shell and cloud application as one product host. The
+// application remains the repository's existing Vite frontend; these rewrites
+// keep its routes and assets on the same public origin.
+const CLOUD_APP_ORIGIN = "https://app.trysynara.com";
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -44,6 +49,14 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
+      { source: "/login", destination: `${CLOUD_APP_ORIGIN}/login` },
+      { source: "/signup", destination: `${CLOUD_APP_ORIGIN}/signup` },
+      { source: "/cloud", destination: `${CLOUD_APP_ORIGIN}/cloud` },
+      { source: "/cloud/:path*", destination: `${CLOUD_APP_ORIGIN}/cloud/:path*` },
+      { source: "/assets/:path*", destination: `${CLOUD_APP_ORIGIN}/assets/:path*` },
+      { source: "/synara-logo.svg", destination: `${CLOUD_APP_ORIGIN}/synara-logo.svg` },
+      { source: "/favicon.ico", destination: `${CLOUD_APP_ORIGIN}/favicon.ico` },
+      { source: "/apple-touch-icon.png", destination: `${CLOUD_APP_ORIGIN}/apple-touch-icon.png` },
       { source: "/docs.md", destination: "/llms.mdx/docs" },
       { source: "/docs/:path*.md", destination: "/llms.mdx/docs/:path*" },
     ];
