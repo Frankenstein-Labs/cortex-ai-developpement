@@ -1,8 +1,8 @@
 <div align="center">
   <img src="./assets/prod/logo.svg" width="112" alt="CORTEX logo">
   <h1>CORTEX</h1>
-  <p><strong>A focused workspace for coding agents.</strong><br>
-  Projects, provider sessions, execution surfaces, and review tools in one local-first desktop application.</p>
+  <p><strong>AI development workspaces, built around CORTEX.</strong><br>
+  Projects, agent sessions, execution surfaces, review tools, and an emerging cloud control plane in one product.</p>
   <p>
     <a href="https://github.com/Emanuele-web04/synara/releases/latest">Download</a>
     &nbsp;·&nbsp;
@@ -91,7 +91,18 @@ Automations support recurring agent runs and keep their outcomes attached to pro
 
 See [External MCP integrations](./docs/external-mcp.md) for setup, pairing, project access, and permission boundaries.
 
-### 7. Appearance and workspace preferences
+### 7. CORTEX Cloud foundation
+
+The web application includes authenticated CORTEX Cloud routes backed by the separately
+deployable `apps/cloud-control` service. The control plane uses opaque HttpOnly sessions,
+organization-scoped PostgreSQL transactions, forced row-level security, projects, workspace
+metadata, and versioned cloud-file persistence. It intentionally does **not** simulate a hosted
+agent, terminal, Git, or runtime while an execution plane is unavailable.
+
+See [`apps/cloud-control/README.md`](./apps/cloud-control/README.md) for configuration and
+deployment requirements, and the implementation report for the current capability boundary.
+
+### 8. Appearance and workspace preferences
 
 Configure the shell to match the way you work with light and dark themes, typography controls, density preferences, and workspace settings.
 
