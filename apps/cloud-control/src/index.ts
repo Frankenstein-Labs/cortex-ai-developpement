@@ -2,7 +2,8 @@
 // Purpose: CORTEX Cloud control-plane HTTP boundary.
 import { SQL } from "bun";
 import { loadCloudControlConfig } from "./config";
-import { hashCloudFileContent, normalizeCloudFilePath } from "./cloudFiles";
+import { decodeCloudFileRoutePath } from "./cloudFileRoute";
+import { hashCloudFileContent } from "./cloudFiles";
 import {
   CloudAuthError,
   createCortexSession,
@@ -480,7 +481,7 @@ async function routeCloudApi(
         );
       let filePath: string;
       try {
-        filePath = normalizeCloudFilePath(`/${filesMatch[2]}`);
+        filePath = decodeCloudFileRoutePath(filesMatch[2]);
       } catch (error) {
         throw new CloudAuthError(
           400,
